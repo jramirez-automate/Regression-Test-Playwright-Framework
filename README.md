@@ -421,11 +421,12 @@ What the wiring adds beyond stock (`src/utils/allure-config.ts` + `allurerc.mjs`
   fresh CI runner. `allure-results/` and `allure-report/` are ignored.
 
 A failure that is already a raised defect can be declared in `allurerc.mjs` under
-`knownIssues.rules`, so the report stops reading it as a new regression. Once the known ones are
-declared, raise `qualityGate.rules[].successRate` so a *new* failure is the only thing that can
-break the build. Note that `known-issues.json` is **not** where rules go — the report writes
-that file itself as a record of matched failures, and hand-editing it into a `{ "rules": [...] }`
-shape makes generation crash with `known.forEach is not a function`.
+`resolutions.rules`, so the report stops reading it as a new regression. A rule matches on
+`messageRegexp`, `testCaseId`, `retryHash` or `environment`, and resolves to `issue` (linked to
+the defect via `resolutions.links`), `muted`, or `accepted`. Once the known ones are declared,
+raise `qualityGate.rules[].successRate` so a *new* failure is the only thing that can break the
+build. Note that `known-issues.json` is **not** where rules go — the report writes that file
+itself as a record of matched failures, and hand-editing it breaks generation.
 
 ## Evidence
 
