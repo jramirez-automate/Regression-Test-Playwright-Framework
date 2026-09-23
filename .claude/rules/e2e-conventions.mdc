@@ -1,0 +1,52 @@
+---
+description: Core conventions for this Playwright regression suite — always applied.
+alwaysApply: true
+---
+
+This repository is a standalone **Playwright regression framework**. Every session here is e2e
+work. Follow `AGENTS.md` and the full rulebook in `CLAUDE.md`. Key rules:
+
+- **Specs live in `src/tests/<feature>/*.spec.ts` by feature domain, never by ticket.**
+  Traceability is a tag: `test.describe("…", { tag: "@PROJ-123" }, …)`, filtered with
+  `TICKET=PROJ-123`.
+- **Import `test` / `expect` from `src/fixtures.ts`, never `@playwright/test`.** The wrapper
+  binds worker accounts and runs the environment guard; a spec that bypasses it loses both
+  silently and fails confusingly under parallelism.
+- **Data safety:** write flows run only on environments listed in `E2E_WRITE_ENVS`. Everything
+  else runs `@smoke` (read-only). Never add production to that list to make a test pass.
+- **Name every created entity with `e2eName()`** (`src/utils/test-data.ts`) and delete it in
+  `test.afterEach` via `CleanupRegistry` (LIFO). Register teardown at creation time — a test
+  that fails midway still has to clean up. Cleanup never throws.
+- **Ask before beta / pre-production / production runs.** Never start Playwright — a regression,
+  a single spec, evidence capture, or a dispatched agent — on those environments until the user
+  explicitly approves that environment in this conversation. Local, dev, qa and staging may run
+  without asking. Details: `env-run-approval`.
+- **Selectors:** prefer `getByRole` / `getByText`; scope modals with
+  `getByRole("dialog").filter({ has: heading })`; raw locators belong in `src/pages/`, not specs.
+  `frameLocator()` for iframes, never `page.frame()`.
+- **TDD:** one slice at a time — write ONE test, run it alone, see it fail meaningfully, drive it
+  green, then the next. Never batch-write specs. Details: `CLAUDE.md` → "TDD authoring loop".
+- **Reuse before you build.** "How do I reach page X" → the Navigation index in
+  `docs/APP-MAP.md`. "Is there a helper for this widget" → the Helpers index and
+  `src/utils/interactions.ts`. Re-discovering a route or re-writing a driver is the waste this
+  suite is designed to eliminate.
+- **Evidence subject visibility:** screenshots and recordings must show the feature under test
+  (scroll it into view, keep the modal or toast open, or `attachSubject` before dismissing).
+  Blank page, spinner, wrong scroll or unrelated screen = invalid evidence. Details:
+  `e2e-evidence-visibility`.
+- **Show a found bug in the chat:** the moment a run exposes a product defect, embed the proving
+  screenshot in the reply (`![what it shows](/abs/path.png)`). A reviewer judges the defect from
+  the chat and cannot assess one they cannot see.
+- **Curate evidence before uploading:** attach only the media the comment references
+  (`npm run evidence:attach -- --from-rows …`), not every artifact in the folder.
+- **TC ids are always `TC-001`, `TC-002`, …** — zero-padded hyphen, never `TC1`. Same form in
+  Jira comments, Confluence tables and Zephyr cases.
+- **Zephyr cases follow the Test Scenario convention** — numbered user actions, expected result
+  on the last step, no framework internals — and are created from the seam table **before** the
+  specs. Details: `e2e-zephyr-cases`.
+- **Context hygiene:** read app source surgically (grep the route, open only what matters,
+  summarise). Never dump whole source files, specs, or raw API JSON into the chat.
+- **Secrets live only in gitignored `.env.*` / `.env.publish`** — never in a tracked file.
+  `npm run typecheck` must pass.
+
+To run a ticket end to end, use `/e2e-ticket`.

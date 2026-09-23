@@ -1,0 +1,17 @@
+node_modules
+dist
+test-results
+src/test-results
+playwright-report
+allure-report
+allure-results
+evidence
+src/evidence
+coverage
+package-lock.json
+*.md
+.cursor
+.claude
+.auth
+templates
+*.html

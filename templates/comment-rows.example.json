@@ -1,0 +1,76 @@
+{
+	"$comment": "Input for scripts/post-evidence-comment.mjs and the --from-rows flag of attach/embed/cleanup. Copy to src/evidence/<TICKET>/comment-rows.json and fill in. Media filenames must match files in that folder exactly — evidence-reporter.ts names them <test-title>-<env>.png|webm, with -FAILED appended for failures.",
+	"title": "Automated E2E regression — Checkout (2026-05-04)",
+	"intro": "Playwright regression for PROJ-123, run on staging and production. Each row links its criterion to the capture that proves it.",
+	"version": "v2.4.0",
+	"envColumns": [
+		{ "key": "staging", "header": "Staging" },
+		{ "key": "prod", "header": "Production" }
+	],
+	"rows": [
+		{
+			"tc": "TC-001",
+			"case": "Completed order confirms back to the shopper",
+			"by": "src/tests/checkout/checkout.spec.ts",
+			"steps": [
+				"Log in as a standard shopper",
+				"Open the product catalogue and add a product to the cart",
+				"Open the cart and select Checkout",
+				"Enter first name, last name and postcode, then continue",
+				"Select Finish on the order overview"
+			],
+			"expectedResult": "The order confirmation is shown and the cart badge returns to empty.",
+			"staging": {
+				"result": "✅ Pass",
+				"media": [
+					"a-completed-order-confirms-back-to-the-shopper-staging.png",
+					"a-completed-order-confirms-back-to-the-shopper-staging.webm"
+				]
+			},
+			"prod": {
+				"result": "✅ Pass",
+				"media": ["a-completed-order-confirms-back-to-the-shopper-prod.png"]
+			}
+		},
+		{
+			"tc": "TC-002",
+			"case": "Checkout refuses to continue without a postcode",
+			"by": "src/tests/checkout/checkout.spec.ts",
+			"steps": [
+				"Log in as a standard shopper",
+				"Add a product to the cart and select Checkout",
+				"Enter first and last name, leave the postcode empty, then continue"
+			],
+			"expectedResult": "Validation reads \"Error: Postal Code is required\" and the order overview does not open.",
+			"staging": {
+				"result": "❌ Fail",
+				"media": [
+					"checkout-refuses-to-continue-without-a-postcode-staging-FAILED.png",
+					"checkout-refuses-to-continue-without-a-postcode-staging-FAILED.webm"
+				]
+			},
+			"prod": { "note": "Not run — write flows are read-only in production." }
+		}
+	],
+	"findings": [
+		{
+			"title": "Empty postcode is accepted",
+			"ticket": "PROJ-456",
+			"description": "Checkout proceeds to the order overview with no postcode, so an order can be placed that fulfilment cannot ship.",
+			"replicate": [
+				"Add any product to the cart and select Checkout",
+				"Fill first and last name only",
+				"Select Continue"
+			],
+			"media": ["checkout-refuses-to-continue-without-a-postcode-staging-FAILED.png"]
+		}
+	],
+	"links": [
+		{
+			"label": "[PROJ-123] Checkout regression - Test Plan",
+			"url": "https://your-org.atlassian.net/wiki/spaces/QA/pages/000000"
+		}
+	],
+	"forbiddenMedia": [],
+	"footer": "One finding raised as PROJ-456. All other criteria passed on both environments."
+}

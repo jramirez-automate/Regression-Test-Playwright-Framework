@@ -1,0 +1,12 @@
+{
+	"version": 1,
+	"hooks": {
+		"beforeSubmitPrompt": [
+			{
+				"type": "command",
+				"command": "python3 .cursor/hooks/e2e-skill-reminder.py",
+				"timeout": 10
+			}
+		]
+	}
+}

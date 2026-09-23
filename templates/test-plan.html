@@ -1,0 +1,102 @@
+<!-- Confluence page title (not part of storage body): [PROJ-123] Checkout regression - Test Plan -->
+<!--
+  Confluence STORAGE FORMAT draft. Copy to src/evidence/<TICKET>/test-plan.html,
+  fill it in, then publish with:
+
+      TICKET=PROJ-123 npm run publish:test-plan
+
+  Layout rules that matter in practice:
+    • The Test Scenario table gets data-layout="full-width" — the TC + Steps +
+      Expected result + per-env evidence columns are unreadable at default width.
+    • Every other table gets data-width="960".
+    • Evidence images are <ac:image> referencing an ATTACHED filename. The
+      publisher uploads the capture files first, so the filename here must match
+      a file in src/evidence/<TICKET>/ exactly.
+    • Link labels read "[TICKET] <Summary>", plus " - Test Plan" / " - Test Cycle"
+      when the target is a plan or cycle. Never a bare key.
+-->
+
+<h2>Change request details</h2>
+<table data-width="960">
+  <tbody>
+    <tr><th>Ticket</th><td><a href="https://your-org.atlassian.net/browse/PROJ-123">[PROJ-123] Checkout regression</a></td></tr>
+    <tr><th>Release</th><td>v2.4.0</td></tr>
+    <tr><th>Tester</th><td>Your Name</td></tr>
+    <tr><th>Date</th><td>2026-05-04</td></tr>
+  </tbody>
+</table>
+
+<h2>Test environment</h2>
+<table data-width="960">
+  <tbody>
+    <tr><th>Environment</th><th>URL</th><th>Version under test</th></tr>
+    <tr><td>Staging</td><td>https://staging.example.com</td><td>v2.4.0</td></tr>
+    <tr><td>Production</td><td>https://www.example.com</td><td>v2.4.0</td></tr>
+  </tbody>
+</table>
+
+<h2>Acceptance criteria</h2>
+<ul>
+  <li>A shopper can complete an order and receives a confirmation.</li>
+  <li>Checkout rejects an order with no postcode and says why.</li>
+</ul>
+
+<h2>Test Scenario</h2>
+<table data-layout="full-width">
+  <tbody>
+    <tr>
+      <th>TC</th><th>Case</th><th>Steps</th><th>Expected result</th><th>Staging</th><th>Production</th>
+    </tr>
+    <tr>
+      <td><strong>TC-001</strong></td>
+      <td>Completed order confirms back to the shopper<br/><code>src/tests/checkout/checkout.spec.ts</code></td>
+      <td>
+        <ol>
+          <li>Log in as a standard shopper</li>
+          <li>Add a product to the cart</li>
+          <li>Open the cart and select Checkout</li>
+          <li>Enter first name, last name and postcode, then continue</li>
+          <li>Select Finish on the order overview</li>
+        </ol>
+      </td>
+      <td>The order confirmation is shown and the cart badge returns to empty.</td>
+      <td>
+        <p>✅ Pass</p>
+        <ac:image ac:width="420"><ri:attachment ri:filename="a-completed-order-confirms-back-to-the-shopper-staging.png" /></ac:image>
+      </td>
+      <td><p>✅ Pass</p></td>
+    </tr>
+    <tr>
+      <td><strong>TC-002</strong></td>
+      <td>Checkout refuses to continue without a postcode<br/><code>src/tests/checkout/checkout.spec.ts</code></td>
+      <td>
+        <ol>
+          <li>Log in as a standard shopper</li>
+          <li>Add a product to the cart and select Checkout</li>
+          <li>Enter first and last name, leave the postcode empty, then continue</li>
+        </ol>
+      </td>
+      <td>Validation reads "Error: Postal Code is required" and the overview does not open.</td>
+      <td><p>❌ Fail — raised as <a href="https://your-org.atlassian.net/browse/PROJ-456">PROJ-456</a></p></td>
+      <td><p>Not run — write flows are read-only in production.</p></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Findings</h2>
+<table data-width="960">
+  <tbody>
+    <tr><th>Finding</th><th>Ticket</th><th>Description</th></tr>
+    <tr>
+      <td>Empty postcode is accepted</td>
+      <td><a href="https://your-org.atlassian.net/browse/PROJ-456">PROJ-456</a></td>
+      <td>Checkout proceeds with no postcode, so an order can be placed that fulfilment cannot ship.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Attachments</h2>
+<ul>
+  <li><a href="https://your-org.atlassian.net/browse/PROJ-123">[PROJ-123] Checkout regression</a></li>
+  <li><a href="#">[PROJ-123] Checkout regression - STAGING Test Cycle</a></li>
+</ul>

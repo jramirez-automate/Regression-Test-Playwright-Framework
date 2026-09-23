@@ -1,0 +1,24 @@
+---
+description: Never run Playwright against beta, pre-production or production without explicit approval in this conversation.
+alwaysApply: true
+---
+
+# Environment run approval
+
+**Never start Playwright against a beta, pre-production or production environment until the user
+explicitly approves that environment in this conversation.** That includes a full regression, a
+single spec, a `--grep`, evidence capture, headed or UI mode, and dispatching `e2e-runner` /
+`e2e-evidence` with those `TEST_ENV` values.
+
+- **Ask first.** Name the environment and wait for an explicit yes. "Run the tests", "continue
+  the ticket", or a yes from a previous conversation is **not** approval.
+- **One environment per ask** when several are in play — do not bundle unless the user named
+  them together.
+- **Local, dev, qa and staging** may run without asking.
+- **On a decline or no answer:** skip that environment. Do not run it "just in case".
+- **Do not circumvent** the gate via CI triggers, workflow dispatch, `E2E_ALLOW_WRITES`, or by
+  editing `E2E_WRITE_ENVS` — unless the user approved that environment (and the flag) here.
+
+The reason is not ceremony. The write-environment policy in `playwright.config.ts` is the only
+thing standing between a create/delete spec and real customer data, and an agent that routes
+around it once has removed the guarantee for everyone.

@@ -1,0 +1,41 @@
+{
+	"$comment": "Input for `node scripts/zephyr.mjs create --spec <path>`. Copy to src/evidence/<TICKET>/zephyr-spec.json. Write this from the SEAM TABLE, before any Playwright spec exists — the cases are the design, not a transcript of the code.",
+	"$stepsConvention": "Numbered USER actions, one discrete action per step. expectedResult belongs on the case (applied to the last step) and names one observable outcome. Never write framework internals — getByRole, afterEach, file paths — into a step: a manual tester reads these next release.",
+
+	"folderName": "[PROJ-123] Checkout regression",
+	"cycleFolder": "STAGING",
+	"cycleName": "[PROJ-123] Checkout regression - STAGING test cycle",
+	"cycleDescription": "Planned cases for the PROJ-123 checkout regression. Executions recorded after the evidence run.",
+
+	"executionStatus": "Not Executed",
+	"cycleStatus": "In Progress",
+	"testCaseStatus": "Approved",
+	"priorityName": "Normal",
+
+	"tests": [
+		{
+			"tc": "TC-001",
+			"name": "Verify a completed order confirms back to the shopper",
+			"steps": [
+				"Log in to the storefront as a standard shopper",
+				"Open the product catalogue",
+				"Add a product to the cart",
+				"Open the cart and select Checkout",
+				"Enter first name, last name and postcode, then select Continue",
+				"Select Finish on the order overview"
+			],
+			"expectedResult": "The order confirmation is displayed and the cart badge returns to empty."
+		},
+		{
+			"tc": "TC-002",
+			"name": "Verify checkout refuses to continue without a postcode",
+			"steps": [
+				"Log in to the storefront as a standard shopper",
+				"Add a product to the cart and select Checkout",
+				"Enter first name and last name, leave the postcode empty",
+				"Select Continue"
+			],
+			"expectedResult": "Validation reads \"Error: Postal Code is required\" and the order overview does not open."
+		}
+	]
+}

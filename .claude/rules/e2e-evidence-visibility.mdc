@@ -1,0 +1,59 @@
+---
+description: Evidence media must show the feature under test; a found bug must be shown in the chat.
+alwaysApply: true
+---
+
+# The evidence subject must be visible
+
+When capturing evidence (`EVIDENCE=true` / `npm run test:evidence`), the **feature, row, modal,
+toast or object under test must be clearly visible** in the screenshot and in the recording's
+proving moment. A green test whose media shows a blank page, a spinner, the wrong scroll
+position, a closed modal or an unrelated screen is **invalid evidence** — worse than no media,
+because it looks like proof. Fix the capture before attaching or commenting.
+
+## Spec authoring
+
+Playwright's default end screenshot is the final viewport. If the proving UI is scrolled off,
+dismissed, or behind another surface, frame it first:
+
+1. **Scroll the subject into view** (`scrollIntoViewIfNeeded`, or a page-object helper that
+   centres the row or panel).
+2. **Keep the proving UI open** until after a mid-test attach when needed — a picker, a dialog,
+   a success toast. Do not Close or Dismiss first if that hides the criterion.
+3. **Attach a focused shot** when the end state is wrong for proof:
+   ```typescript
+   import { attachSubject, attachCloseUp } from "../../utils";
+   await attachSubject(page, test.info());
+   await attachCloseUp(page, test.info(), iconOnlyButton);
+   ```
+   `evidence-reporter.ts` prefers these mid-test attachments over the end-of-test viewport shot.
+4. **Video**: end the test while the subject is still on screen, so the proving frames are in the
+   `.webm` and not only in setup and navigation.
+
+## Verification
+
+For every TC artifact, confirm the **named subject of that criterion** is readable in the PNG and
+present in the video. Wrong viewport, or subject missing → FAIL that cell or recapture, **even if
+the Playwright status was passed**.
+
+## Show a found bug in the chat
+
+Whenever a run exposes a product defect — a failing criterion you are about to raise, record as a
+finding, or ask the user about — **embed the proving screenshot in the chat reply**:
+
+```
+![Order stuck on Pending after Confirm](/abs/path/to/test-failed-1.png)
+```
+
+Not a bare path, and never prose alone. A reviewer reads the chat: a defect they cannot see
+forces them to go hunting through `src/test-results/` or the ticket's attachments before they can
+judge it.
+
+1. **Embed at the moment of discovery**, in the same reply that reports the failure — not later,
+   after publishing.
+2. **Pick the frame that shows the defect** (the stuck row, the error dialog, the missing control
+   in an open menu). A blank page or a post-teardown viewport proves nothing.
+3. **Say what the reader is looking at** in the alt text and the surrounding sentence — which
+   screen, what is wrong — plus the server's own words when an API failed.
+4. **Also embed after `evidence:attach` / `evidence:embed`** when reporting that a bug was
+   raised, so the chat shows what landed on the ticket.

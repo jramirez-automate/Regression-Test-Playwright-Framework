@@ -1,0 +1,82 @@
+{
+  "name": "regression-test-playwright-framework",
+  "version": "1.0.0",
+  "description": "Product-neutral Playwright regression framework: POM, env-aware data safety, Allure reporting, evidence capture, and AI-agent tooling.",
+  "private": false,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "postinstall": "node scripts/setup.mjs",
+    "setup": "node scripts/setup.mjs",
+    "test": "node_modules/.bin/playwright test",
+    "test:demo": "TEST_ENV=demo node_modules/.bin/playwright test",
+    "test:local": "TEST_ENV=local node_modules/.bin/playwright test",
+    "test:dev": "TEST_ENV=dev node_modules/.bin/playwright test",
+    "test:qa": "TEST_ENV=qa node_modules/.bin/playwright test",
+    "test:staging": "TEST_ENV=staging node_modules/.bin/playwright test",
+    "test:prod": "TEST_ENV=prod node_modules/.bin/playwright test",
+    "test:smoke": "node_modules/.bin/playwright test --grep @smoke",
+    "test:headed": "HEADED=true node_modules/.bin/playwright test",
+    "test:debug": "node_modules/.bin/playwright test --debug",
+    "test:ui": "node_modules/.bin/playwright test --ui",
+    "test:codegen": "node_modules/.bin/playwright codegen --load-storage=.auth/user.json",
+    "test:evidence": "EVIDENCE=true node_modules/.bin/playwright test",
+    "report": "node_modules/.bin/playwright show-report",
+    "report:allure": "npm run report:allure:generate && allure open allure-report --port 8080",
+    "report:allure:generate": "allure generate allure-results --output allure-report",
+    "report:allure:gate": "allure quality-gate allure-results",
+    "allure:clean": "node --eval \"const fs = require('fs'); for (const d of ['allure-results', 'allure-report']) fs.rmSync(d, { recursive: true, force: true });\"",
+    "evidence:attach": "node scripts/attach-evidence.mjs",
+    "evidence:comment": "node scripts/post-evidence-comment.mjs",
+    "evidence:embed": "node scripts/embed-evidence-in-description.mjs",
+    "evidence:cleanup": "node scripts/cleanup-attachments.mjs",
+    "publish:test-plan": "node scripts/publish-test-plan.mjs",
+    "publish:prune-attachments": "node scripts/prune-test-plan-attachments.mjs",
+    "zephyr": "node scripts/zephyr.mjs",
+    "notify:teams": "node scripts/notify-teams.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint playwright.config.ts evidence-reporter.ts progress-reporter.ts src/",
+    "lint:fix": "eslint playwright.config.ts evidence-reporter.ts progress-reporter.ts src/ --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json}\" --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json}\" --ignore-path .prettierignore",
+    "scan:secrets": "node scripts/scan-secrets.js",
+    "scan:secrets:staged": "node scripts/scan-secrets.js --staged",
+    "scan:secrets:self-test": "node scripts/scan-secrets.js --self-test",
+    "check:reachability": "node scripts/check-reachability.js",
+    "sync:ai": "node scripts/sync-ai-mirrors.mjs --from=claude",
+    "sync:ai:check": "node scripts/sync-ai-mirrors.mjs --check",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --no-warn-ignored",
+      "prettier --write"
+    ]
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "test-automation",
+    "page-object-model",
+    "regression-testing",
+    "allure",
+    "typescript"
+  ],
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "^20.19.43",
+    "@typescript-eslint/eslint-plugin": "^8.68.0",
+    "@typescript-eslint/parser": "^8.14.0",
+    "allure": "^3.16.0",
+    "allure-playwright": "^3.11.1",
+    "dotenv": "^17.3.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-playwright": "^2.11.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.6.2",
+    "typescript": "^5.8.3"
+  }
+}

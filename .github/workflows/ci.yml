@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      test_env:
+        description: "TEST_ENV to run against"
+        required: false
+        default: "demo"
+      grep:
+        description: "Tag filter, e.g. @smoke"
+        required: false
+        default: ""
+  schedule:
+    # Weekly regression, Friday 14:00 UTC. Cron only fires once this file is on
+    # the default branch.
+    - cron: "0 14 * * 5"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Typecheck, lint, secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run scan:secrets
+      - run: npm run format:check
+
+  test:
+    name: Playwright (${{ github.event.inputs.test_env || 'demo' }})
+    runs-on: ubuntu-latest
+    needs: quality
+    env:
+      CI: "true"
+      TEST_ENV: ${{ github.event.inputs.test_env || 'demo' }}
+      # Secrets win over any .env file. The demo defaults keep a fork's CI green
+      # without configuration; set repository secrets to target your own app.
+      BASE_URL: ${{ secrets.BASE_URL || 'https://www.saucedemo.com' }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME || 'standard_user' }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD || 'secret_sauce' }}
+      APP_VERSION: ${{ secrets.APP_VERSION }}
+      ALLURE_JIRA_BROWSE_URL: ${{ secrets.ALLURE_JIRA_BROWSE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      # Fail in seconds if the environment is unreachable, rather than burning
+      # the suite timeout on locator failures that blame the selectors.
+      - name: Check reachability
+        run: npm run check:reachability
+
+      - name: Run Playwright
+        run: npx playwright test ${{ github.event.inputs.grep && format('--grep {0}', github.event.inputs.grep) || '' }}
+
+      - name: Generate Allure report
+        if: always()
+        run: npm run report:allure:generate
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload Allure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report/
+          retention-days: 14

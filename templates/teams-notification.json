@@ -1,0 +1,33 @@
+{
+	"type": "AdaptiveCard",
+	"$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+	"version": "1.4",
+	"body": [
+		{
+			"type": "TextBlock",
+			"text": "✅ {{TICKET}} passed testing",
+			"weight": "Bolder",
+			"size": "Large",
+			"wrap": true
+		},
+		{
+			"type": "TextBlock",
+			"text": "{{SUMMARY}}",
+			"wrap": true,
+			"spacing": "Small"
+		},
+		{
+			"type": "FactSet",
+			"facts": [
+				{ "title": "Environment", "value": "{{ENV}}" },
+				{ "title": "Tested by", "value": "{{TESTER}}" },
+				{ "title": "Date", "value": "{{DATE}}" }
+			]
+		}
+	],
+	"actions": [
+		{ "type": "Action.OpenUrl", "title": "Open in Jira", "url": "{{JIRA_URL}}" },
+		{ "type": "Action.OpenUrl", "title": "Evidence", "url": "{{EVIDENCE_URL}}" },
+		{ "type": "Action.OpenUrl", "title": "Test plan", "url": "{{TEST_PLAN_URL}}" }
+	]
+}

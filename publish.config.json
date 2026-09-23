@@ -1,0 +1,38 @@
+{
+  "$comment": "Publishing pipeline configuration. Committed on purpose — it holds ids and names, never secrets. Tokens live in the gitignored .env.publish. Every id below is a placeholder: replace them with your own before running any publish script.",
+  "evidenceRoot": "src/evidence",
+  "jira": {
+    "baseUrl": "https://your-org.atlassian.net",
+    "$comment": "Link types applied to every bug raised from a failing TC. Each parent is passed as inwardIssue and the bug as outwardIssue, so the bug appears under the parent's Bug section rather than the reverse.",
+    "bugParents": [],
+    "bugLinkType": "Bug"
+  },
+  "confluence": {
+    "defaultTarget": "default",
+    "targets": {
+      "default": {
+        "label": "<SPACE> / Test plans",
+        "spaceKey": "QA",
+        "spaceId": "0000000000",
+        "parentId": "0000000000",
+        "$comment": "evidencePattern decides which capture files are uploaded alongside the page, so the Evidence column embeds resolve. Env suffixes come from evidence-reporter.ts.",
+        "evidencePattern": "-(dev|qa|staging|prod)(-FAILED)?(-\\d+)?\\.(png|webm)$",
+        "$comment2": "Confluence folder parents reject parentId on update; page parents accept it. Set true only when parentId is a page.",
+        "sendParentIdOnUpdate": false
+      }
+    }
+  },
+  "zephyr": {
+    "$comment": "Folder names as they appear in Zephyr Scale. rootFolder must already exist in the project; the per-ticket folder is created underneath it.",
+    "rootFolder": "Regression",
+    "primaryCycleFolder": "STAGING",
+    "productionCycleFolder": "PRODUCTION",
+    "testCaseStatus": "Approved",
+    "priorityName": "Normal"
+  },
+  "teams": {
+    "$comment": "Envs that must ALL be green before a pass notification may be posted. Set to [] to allow any env.",
+    "requiredEnvs": ["prod"],
+    "format": "simple"
+  }
+}

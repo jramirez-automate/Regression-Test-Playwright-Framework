@@ -1,0 +1,39 @@
+# Environment files — credentials. .env.example is the only committed one.
+.env.*
+!.env.example
+
+# Publishing credentials (Jira / Confluence / Zephyr / Teams tokens)
+.env.publish
+
+# Saved auth state (written by globalSetup)
+.auth/
+
+# Playwright output
+node_modules/
+playwright-report/
+test-results/
+src/test-results/
+
+# Allure run report. Results and the built report are per-run and disposable.
+# docs/allure-history.jsonl is NOT ignored — it is the trend, and it only means
+# anything if it accumulates across machines and CI runs.
+allure-results/
+allure-report/
+allure-results.zip
+share/
+
+# Evidence captures (EVIDENCE=true) — screenshots, videos, traces.
+# Generated on demand to publish against a ticket; never committed.
+evidence/
+src/evidence/
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+
+# Agent local settings (machine-specific permissions)
+.claude/settings.local.json
+
+# Windows "downloaded from the internet" metadata beside test fixtures
+*:Zone.Identifier

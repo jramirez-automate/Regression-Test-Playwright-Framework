@@ -1,0 +1,46 @@
+---
+description: Zephyr / test-management cases read like a Test Scenario, not like a Playwright spec.
+globs: ["**/zephyr-spec.json", "scripts/lib/zephyr/**"]
+---
+
+# Test-management cases
+
+Every case we create or update must read like the Jira / Confluence **Test Scenario** row — not
+like a Playwright spec. Somebody will run it by hand next release, and a step that reads like a
+stack trace is a step they cannot follow.
+
+## Steps
+
+- Copy from the Test Scenario table when one exists (`comment-rows.json` → `steps` +
+  `expectedResult`, or the Confluence columns). The same wording, not a paraphrase of locators.
+- Numbered **user** actions only: log in → open the area → act. One discrete action per step.
+- `expectedResult` on the **last** step only — one observable outcome (a heading, a toast, a row,
+  a URL, validation copy).
+- Do **not** write framework internals into steps (`e2eName()`, `afterEach`, `getByRole`,
+  `test.skip`, file paths). Do **not** use filler like "Open the app" plus the test title when
+  the ticket already has real steps.
+- Name: one sentence starting **Verify …**. `"tc": "TC-001"` — zero-padded.
+
+## Order of creation
+
+Cases come from the **seam table, before any Playwright spec exists**. The seam table is the
+design artifact; the specs and the cases are two renderings of it. Generating cases *from*
+finished code inverts the relationship and yields steps written in the vocabulary of the
+implementation.
+
+Create them in planned mode (`executionStatus: "Not Executed"`, cycle "In Progress"):
+
+```
+TICKET=<KEY> npm run zephyr -- create --spec src/evidence/<KEY>/zephyr-spec.json
+```
+
+After a green evidence run, record the results:
+
+```
+TICKET=<KEY> npm run zephyr -- mark-pass
+```
+
+`mark-pass` creates NEW executions rather than mutating the planned ones, so the "Not Executed"
+state survives as proof the cases predated the run.
+
+Schema: `templates/zephyr-spec.json`. Agent: `e2e-evidence`. Pipeline: `docs/PUBLISHING.md`.
