@@ -1,0 +1,13 @@
+{
+  "$comment": "Frontend source mirrors for selector tracing — the explorer's PRIMARY source when your team has repo access. Clones land in vendor/<name>, which is gitignored: these are a read-only mirror of someone else's repo, not content this repo owns. Leave `repos` empty if you have no frontend access; the explorer falls back to manual test cases, then codegen. Refresh with `npm run vendor:refresh`.",
+  "repos": [
+    {
+      "$comment": "Example. Delete or replace. `sparse` is the decisive field: a monorepo is usually gigabytes, and the explorer only ever needs the UI source. Listing the two or three directories that hold components cuts a clone to tens of megabytes.",
+      "name": "frontend",
+      "url": "git@github.com:your-org/your-frontend.git",
+      "branch": "main",
+      "sparse": ["src", "packages/ui/src"],
+      "enabled": false
+    }
+  ]
+}

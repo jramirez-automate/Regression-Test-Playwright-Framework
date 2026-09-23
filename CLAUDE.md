@@ -164,8 +164,12 @@ inverts that and yields steps a manual tester cannot follow.
 
 ## Ticket workflow
 
-1. **Explore** — read the ticket, map the route → components → selectors, write a compact flow
-   map to `src/evidence/<TICKET>/flow-map.md`.
+1. **Explore** — read the ticket, then map the route → components → selectors from the highest
+   available tier of the selector ladder: **(1)** vendored frontend source (`vendor/`, via
+   `npm run vendor:refresh`), **(2)** existing manual test cases converted into the flow,
+   **(3)** codegen or the Playwright MCP against the running app. Write a compact flow map to
+   `src/evidence/<TICKET>/flow-map.md` and name the tier — it tells the reader how much to
+   trust the selectors. None available → report BLOCKED; never invent markup.
 2. **Seam table + Zephyr cases** — present the TC table, then create the cases in planned mode
    (`Not Executed`) **before** any spec is written.
 3. **Write specs (TDD)** — from `flow-map.md`, one slice at a time.

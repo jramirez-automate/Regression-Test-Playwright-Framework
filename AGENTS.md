@@ -76,8 +76,12 @@ There is no `.cursorrules` — this file and `CLAUDE.md` are the rulebooks.
 If subagents and commands are unavailable, run the same pipeline as staged steps that hand off
 through files:
 
-1. **Explore** — read the ticket, grep the app for the route → components → selectors, write a
-   compact map to `src/evidence/<TICKET>/flow-map.md`.
+1. **Explore** — read the ticket, then work down the selector ladder and use the first tier
+   available: **(1)** vendored frontend source in `vendor/` (`npm run vendor:refresh`),
+   **(2)** existing manual test cases — Zephyr, a Confluence Test Scenario, the ticket's own
+   steps — converted into the flow, **(3)** `npm run test:codegen` or the Playwright MCP against
+   the running app. Write a compact map to `src/evidence/<TICKET>/flow-map.md`, naming the tier
+   you used. If none is available, report BLOCKED rather than guessing at markup.
 2. **Seam table + Zephyr cases** — present the TC table, then
    `TICKET=… npm run zephyr -- create --spec …` in planned mode, before any spec.
 3. **Write specs (TDD)** — from `flow-map.md`, one slice at a time.

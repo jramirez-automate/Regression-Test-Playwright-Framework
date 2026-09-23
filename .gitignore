@@ -22,6 +22,11 @@ allure-report/
 allure-results.zip
 share/
 
+# Vendored frontend source mirrors (npm run vendor:refresh). Read-only clones of
+# someone else's repo, recreated on demand — vendor.config.json is the committed
+# part, the checkouts are not.
+vendor/
+
 # Evidence captures (EVIDENCE=true) — screenshots, videos, traces.
 # Generated on demand to publish against a ticket; never committed.
 evidence/

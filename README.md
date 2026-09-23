@@ -113,6 +113,8 @@ Regression-Test-Playwright-Framework/
 ├── CLAUDE.md                 # Conventions contract
 ├── COVERAGE.md               # Ticket coverage ledger
 ├── publish.config.json       # Jira / Confluence / Zephyr / Teams ids — committed, no secrets
+├── vendor.config.json        # Frontend source mirrors for selector tracing (tier 1)
+├── vendor/                   # Sparse clones of that source (gitignored, on demand)
 ├── playwright.config.ts      # TEST_ENV, workers, reporters, evidence mode, safety grep
 ├── evidence-reporter.ts      # EVIDENCE=true → named media in src/evidence/<TICKET>/
 ├── progress-reporter.ts      # Optional live-run progress file
@@ -129,6 +131,8 @@ Regression-Test-Playwright-Framework/
 │   ├── setup.mjs             # postinstall: hooks, Chromium, .env stubs
 │   ├── scan-secrets.js       # Pre-commit + CI secret scanner
 │   ├── check-reachability.js # TCP preflight of BASE_URL
+│   ├── refresh-vendor.sh     # Sparse/shallow clones of the frontend source (tier 1)
+│   ├── codegen.mjs           # Authenticated codegen on BASE_URL (tier 3)
 │   ├── sync-ai-mirrors.mjs   # Keep .claude ↔ .cursor identical
 │   ├── attach-evidence.mjs / post-evidence-comment.mjs
 │   ├── embed-evidence-in-description.mjs / cleanup-attachments.mjs
@@ -523,6 +527,42 @@ npm run sync:ai:check            # exit 2 if any pair differs
 There is no `.cursorrules`; guidance lives in `AGENTS.md` and `CLAUDE.md`. The Playwright MCP is
 for **browser exploration**, not as a test runner.
 
+### Where selectors come from — a strict ladder
+
+The explorer works down three tiers and uses the first one available, because each is weaker
+than the one above it. It reports which tier it used, so a reviewer knows how much to trust the
+result.
+
+| Tier | Source | Setup | Gives you |
+| --- | --- | --- | --- |
+| **1** | Vendored frontend source | `vendor.config.json` + `npm run vendor:refresh` | The full route table, feature-flagged branches, exact `t("...")` strings — the things a rendered page hides |
+| **2** | Existing manual test cases | None — read the Zephyr case, Confluence Test Scenario, or ticket steps | The flow, the criteria and the success signals, already in user vocabulary. Not selectors |
+| **3** | Codegen / live app | `npm run test:codegen`, or the Playwright MCP | Real roles and accessible names, but only for states you can actually reach |
+
+**Tier 1** needs read access to the frontend repo. Add it to `vendor.config.json` and run
+`npm run vendor:refresh` — a sparse, shallow, blob-less clone, so a monorepo costs tens of
+megabytes rather than gigabytes. `vendor/` is gitignored; it is a mirror, not content this repo
+owns. The script is non-fatal: offline or unauthenticated, it warns and the explorer drops a
+tier.
+
+**Tier 2** is better than its position suggests. Manual cases are already written as numbered
+user actions with one observable expected result — the exact shape this suite needs — so
+converting them is the intended path rather than a workaround. They just do not carry locators,
+which you resolve against the running app before writing the spec.
+
+**Tier 3** only ever shows the states you happen to reach: an empty list, an action you lack
+permission for, or a flag that is off simply will not appear. The explorer is required to say
+which states it could not reach.
+
+If all three are unavailable, the explorer reports `BLOCKED` and stops rather than inventing
+markup — a flow map guessed from assumed DOM produces page objects that fail on every selector.
+
+```bash
+npm run vendor:refresh              # tier 1: clone/refresh the source mirrors
+npm run test:codegen                # tier 3: authenticated codegen on BASE_URL
+npm run test:codegen -- /orders/new # …starting on a deep link
+```
+
 | What you want | Say / run this |
 | --- | --- |
 | A full ticket (explore → cases → specs → evidence) | `/e2e-ticket PROJ-123` |
@@ -612,7 +652,8 @@ npm run test:ui
 | `npm run test:headed` / `test:debug` / `test:ui` | Visible / debug / UI mode |
 | `npm run test:smoke` | The read-only `@smoke` subset |
 | `npm run test:evidence` | Capture PNG/WebM into `src/evidence/<TICKET>/` |
-| `npm run test:codegen` | Authenticated codegen |
+| `npm run test:codegen` | Authenticated codegen on `BASE_URL` (takes a path argument) |
+| `npm run vendor:refresh` | Clone/refresh the frontend source mirrors in `vendor/` |
 | `npm run report` | Playwright HTML report |
 | `npm run report:allure` / `:generate` / `:gate` | Allure run report |
 | `npm run allure:clean` | Delete `allure-results/` and `allure-report/` |
