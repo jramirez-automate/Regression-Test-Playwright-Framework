@@ -25,7 +25,7 @@ test.describe("Checkout", { tag: "@PROJ-103" }, () => {
 		const shopper = personFixture("Buyer", "Test");
 		const product = "Sauce Labs Backpack";
 
-		await test.step("Add a product to the cart", async () => {
+		await test.step(`GIVEN the shopper adds "${product}" to the cart`, async () => {
 			await inventory.gotoList();
 			await inventory.addToCart(product);
 			// Registered immediately, not at the end: a test that fails midway
@@ -36,9 +36,11 @@ test.describe("Checkout", { tag: "@PROJ-103" }, () => {
 			});
 		});
 
-		expect(await inventory.cartCount()).toBe(1);
+		await test.step("AND the cart badge shows 1 item", async () => {
+			expect(await inventory.cartCount()).toBe(1);
+		});
 
-		await test.step("Check out with generated shopper details", async () => {
+		await test.step(`WHEN the shopper checks out as "${shopper.firstName} ${shopper.lastName}" with postcode "4000"`, async () => {
 			await cart.gotoCart();
 			await cart.startCheckout();
 			await checkout.fillDetails({
@@ -49,14 +51,19 @@ test.describe("Checkout", { tag: "@PROJ-103" }, () => {
 			await checkout.continueToOverview();
 		});
 
-		await test.step("Confirm the order", async () => {
+		await test.step("AND confirms the order with Finish", async () => {
 			await checkout.finish();
 		});
 
-		await expect(checkout.confirmationHeading).toBeVisible();
-		// The order completed, so the cart is empty and the cleanup task above
-		// becomes a no-op — which is exactly why it must never throw.
-		expect(await inventory.cartCount()).toBe(0);
+		await test.step("THEN the order confirmation is shown", async () => {
+			await expect(checkout.confirmationHeading).toBeVisible();
+		});
+
+		await test.step("AND the cart is empty", async () => {
+			// The order completed, so the cleanup task above becomes a no-op —
+			// which is exactly why it must never throw.
+			expect(await inventory.cartCount()).toBe(0);
+		});
 	});
 
 	test("checkout refuses to continue without a postcode", async ({ page }) => {
@@ -66,24 +73,33 @@ test.describe("Checkout", { tag: "@PROJ-103" }, () => {
 		const shopper = personFixture("Buyer", "Test");
 		const product = "Sauce Labs Bike Light";
 
-		await inventory.gotoList();
-		await inventory.addToCart(product);
-		cleanup.add(async () => {
+		await test.step(`GIVEN the shopper adds "${product}" to the cart`, async () => {
+			await inventory.gotoList();
+			await inventory.addToCart(product);
+			cleanup.add(async () => {
+				await cart.gotoCart();
+				await cart.removeByName(product);
+			});
+		});
+
+		await test.step("WHEN the shopper continues checkout with no postcode", async () => {
 			await cart.gotoCart();
-			await cart.removeByName(product);
+			await cart.startCheckout();
+			await checkout.fillDetails({
+				firstName: shopper.firstName,
+				lastName: shopper.lastName,
+				postalCode: "",
+			});
+			await checkout.continueButton.click();
 		});
 
-		await cart.gotoCart();
-		await cart.startCheckout();
-		await checkout.fillDetails({
-			firstName: shopper.firstName,
-			lastName: shopper.lastName,
-			postalCode: "",
+		await test.step('THEN the error "Postal Code is required" is shown', async () => {
+			expect(await checkout.errorText()).toMatch(/postal code is required/i);
 		});
-		await checkout.continueButton.click();
 
-		expect(await checkout.errorText()).toMatch(/postal code is required/i);
-		// The negative half of the criterion: rejected means it did NOT proceed.
-		await expect(checkout.finishButton).toBeHidden();
+		await test.step("AND checkout does not move on to the order overview", async () => {
+			// The negative half of the criterion: rejected means it did NOT proceed.
+			await expect(checkout.finishButton).toBeHidden();
+		});
 	});
 });
