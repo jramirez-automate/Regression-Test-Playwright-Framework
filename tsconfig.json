@@ -19,6 +19,7 @@
     "playwright-report",
     "allure-report",
     ".auth",
-    "templates"
+    "templates",
+    "evals"
   ]
 }

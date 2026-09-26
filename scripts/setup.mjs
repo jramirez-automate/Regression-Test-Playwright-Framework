@@ -24,7 +24,9 @@ const log = (m) => console.log(`[setup] ${m}`);
 const warn = (m) => console.warn(`[setup] ${m}`);
 
 function run(cmd, args, opts = {}) {
-	return spawnSync(cmd, args, { cwd: root, stdio: "inherit", ...opts }).status === 0;
+	return (
+		spawnSync(cmd, args, { cwd: root, stdio: "inherit", ...opts }).status === 0
+	);
 }
 function inGitRepo() {
 	return (
@@ -37,7 +39,8 @@ function inGitRepo() {
 
 // 1. Activate the tracked git hooks.
 if (inGitRepo()) {
-	if (run("git", ["config", "core.hooksPath", ".husky"])) log("git hooks path → .husky");
+	if (run("git", ["config", "core.hooksPath", ".husky"]))
+		log("git hooks path → .husky");
 	else warn("could not set core.hooksPath (non-fatal)");
 } else {
 	warn("not a git checkout — skipping hooks path");
@@ -45,14 +48,19 @@ if (inGitRepo()) {
 
 // 2. Playwright Chromium — idempotent, fast when already present.
 if (isCI) {
-	log("CI detected — skipping Playwright browser install (the workflow does it)");
+	log(
+		"CI detected — skipping Playwright browser install (the workflow does it)",
+	);
 } else {
 	const pw = path.join(root, "node_modules/.bin/playwright");
 	if (fs.existsSync(pw)) {
 		log("ensuring Playwright chromium is installed…");
-		if (!run(pw, ["install", "chromium"])) warn("playwright install chromium failed (non-fatal)");
+		if (!run(pw, ["install", "chromium"]))
+			warn("playwright install chromium failed (non-fatal)");
 	} else {
-		warn("node_modules/.bin/playwright not found yet — it arrives with `npm ci`");
+		warn(
+			"node_modules/.bin/playwright not found yet — it arrives with `npm ci`",
+		);
 	}
 }
 
@@ -89,6 +97,36 @@ scaffold(
 		"",
 	].join("\n"),
 );
+scaffold(
+	".env.eval",
+	[
+		"# QA artifact evals (npm run eval) — gitignored. See .env.example for options.",
+		"# Unset = pattern checks only. Set a judge to also run the judgment checks.",
+		"# EVAL_JUDGE=ollama",
+		"# EVAL_JUDGE_MODEL=qwen2.5:7b",
+		"",
+	].join("\n"),
+);
+
+// deepeval (npm, up to at least 0.9.20) ships a stale dist/telemetry.js beside
+// dist/telemetry/. Node resolves require("../telemetry") to the stale file, so
+// every metric throws "inComponentScope is not a function". Remove it until
+// upstream stops publishing it.
+const staleTelemetry = path.join(
+	root,
+	"node_modules/deepeval/dist/telemetry.js",
+);
+if (
+	fs.existsSync(staleTelemetry) &&
+	fs.existsSync(
+		path.join(root, "node_modules/deepeval/dist/telemetry/index.js"),
+	)
+) {
+	for (const f of [staleTelemetry, staleTelemetry.replace(/\.js$/, ".d.ts")]) {
+		fs.rmSync(f, { force: true });
+	}
+	log("removed deepeval's stale dist/telemetry.js");
+}
 
 // 4. Remaining manual steps.
 console.log(

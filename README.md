@@ -28,6 +28,7 @@ Fresh-machine setup: [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
 - [Reporting](#reporting)
 - [Evidence](#evidence)
 - [Publishing pipeline](#publishing-pipeline)
+- [QA artifact evals](#qa-artifact-evals)
 - [AI-assisted development](#ai-assisted-development)
 - [Best practices](#best-practices)
 - [Troubleshooting](#troubleshooting)
@@ -513,6 +514,40 @@ Notes that save time:
   capture folder also holds unused environment runs and traces, and dumping all of it buries the
   three files a reviewer actually needs.
 
+## QA artifact evals
+
+[DeepEval](https://deepeval.com) checks that test cases, bug reports and exploratory debriefs
+follow the conventions in the QA skills (`test-case-design`, `bug-reporting`,
+`exploratory-testing`). It runs on Vitest, separate from the Playwright suite:
+
+```bash
+npm run eval
+```
+
+Each artifact kind has a good and a bad sample in `evals/samples/<kind>/`, and every check must
+pass the good one and fail the bad one — a check that passes both measures nothing. Every run
+prints each score with its reason.
+
+| Check type | Examples | How it's scored | When it runs |
+| --- | --- | --- | --- |
+| **pattern** | `TC-###` ids, names start with **Verify**, `Environment:` block first, no file paths or selectors | Regular expression (`PatternMatchMetric`) — instant, free, exact | Always |
+| **judge** | All criteria covered, nothing invented, summary says what and where, concrete follow-ups | An LLM judge answering one yes/no question (`GEval`) | Only when a judge is set in `.env.eval` |
+
+Choose the judge in the gitignored `.env.eval` (options in `.env.example`):
+
+- **Ollama** (local, free): install [Ollama](https://ollama.com), `ollama serve`,
+  `ollama pull qwen2.5:7b`, then `EVAL_JUDGE=ollama`. Use a 7B model or larger — a 3B model
+  misreads the artifacts and scores nearly everything 0.
+- **Grok** (xAI API): `EVAL_JUDGE=grok` and `GROK_API_KEY`.
+
+With no judge configured the judgment checks are skipped, not failed, so a fresh clone and CI
+stay green. DeepEval's anonymous telemetry is turned off (`DEEPEVAL_TELEMETRY_OPT_OUT`).
+
+> **Known DeepEval packaging bug.** The npm package (through at least 0.9.20) ships a stale
+> `dist/telemetry.js` that shadows `dist/telemetry/`, so every metric throws
+> `inComponentScope is not a function`. `postinstall` (`scripts/setup.mjs`) deletes the stale
+> file; remove that step once upstream fixes it.
+
 ## AI-assisted development
 
 Cursor and Claude Code share the same agents, commands, skills and rules under `.claude/` and
@@ -665,7 +700,8 @@ npm run test:ui
 | `npm run publish:prune-attachments` | Delete stale page attachments after a rename |
 | `npm run zephyr` | Zephyr Scale (`create` / `mark-pass`) |
 | `npm run notify:teams` | Pass notification to a Teams webhook |
-| `npm run typecheck` | `tsc --noEmit` |
+| `npm run eval` | DeepEval checks on QA artifacts (`evals/`) |
+| `npm run typecheck` | `tsc --noEmit` (suite + `evals/`) |
 | `npm run lint` / `lint:fix` | ESLint |
 | `npm run format` / `format:check` | Prettier |
 | `npm run scan:secrets` / `:staged` | Secret scanner |
