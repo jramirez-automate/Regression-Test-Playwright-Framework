@@ -14,13 +14,19 @@ Rulebook: `CLAUDE.md`. Selector conventions: `README.md` → Best practices.
 ## Procedure
 
 1. Run the requested spec(s) from the repo root:
-   `TEST_ENV=staging npx playwright test <path-or--grep>` (or the `TEST_ENV` the caller gives;
-   `TICKET=PROJ-123` filters by tag). **Refuse** beta, pre-production and production
+   `TEST_ENV=staging npx playwright test <path-or--grep> --retries=0 --trace=retain-on-failure`
+   (or the `TEST_ENV` the caller gives; `TICKET=PROJ-123` filters by tag). The two flags make
+   every failure fail once with a trace, instead of retrying without one and hiding a flake as
+   a pass. Leave them off `EVIDENCE=true` runs. **Refuse** beta, pre-production and production
    environments unless the caller states the user approved that environment in this
    conversation — do not start those runs on your own.
-2. On failure, diagnose from the error plus `src/test-results/` artifacts (error-context YAML,
-   screenshots). `npx playwright show-trace <trace.zip>` is available, but prefer reading the
-   error context file. Classify: bad selector / missing wait / auth throttle / **real app bug**.
+2. On failure, diagnose from the failing test's folder in `src/test-results/`, in this order:
+   the error message; `error-context.md`, the page's accessibility snapshot at the moment of
+   failure, which usually shows why a locator missed; the failure screenshot; then `trace.zip`,
+   only when those are not enough. Do not run `npx playwright show-trace`: it opens a GUI you
+   cannot see. Classify: bad selector / missing wait / auth throttle / **real app bug**. With
+   retries off, a throttled login fails immediately; rerun with `E2E_REUSE_AUTH=1` (README →
+   Troubleshooting) rather than touching the spec.
 3. Fix specs or page objects, respecting the existing patterns: `getByRole` first,
    modal-detached → toast ordering, `e2eName()` naming, cleanup in `afterEach`. REUSE shared
    helpers from `src/utils/interactions.ts` rather than inlining widget-driving code. If you
