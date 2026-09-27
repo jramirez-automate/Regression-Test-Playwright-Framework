@@ -227,12 +227,19 @@ export function playwrightBaseURL(): string {
 	}
 }
 
-/** API origin for prerequisite data setup. Defaults to the app origin. */
+/**
+ * Base URL for API calls. Defaults to the app origin. A path is kept and given
+ * a trailing "/", so request paths must omit the leading slash ("orders/42") —
+ * a leading "/" resolves against the host root and drops the prefix.
+ */
 export function apiBaseURL(): string {
 	const raw = (process.env.API_BASE_URL ?? "").trim();
 	if (!raw) return playwrightBaseURL();
-	const withScheme = raw.includes("://") ? raw : `https://${raw}`;
-	return new URL(withScheme).origin;
+	const url = new URL(raw.includes("://") ? raw : `https://${raw}`);
+	const pathname = url.pathname.endsWith("/")
+		? url.pathname
+		: `${url.pathname}/`;
+	return pathname === "/" ? url.origin : `${url.origin}${pathname}`;
 }
 
 /**

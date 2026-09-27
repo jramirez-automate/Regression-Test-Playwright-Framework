@@ -11,6 +11,10 @@ proving moment. A green test whose media shows a blank page, a spinner, the wron
 position, a closed modal or an unrelated screen is **invalid evidence** — worse than no media,
 because it looks like proof. Fix the capture before attaching or commenting.
 
+API cases have no screen. Their evidence is the `<test>-<env>-response.json` written from
+`readBody()`: it must show the request, status and body the case's assertion is about. An API
+case with no response file is incomplete.
+
 ## Spec authoring
 
 Playwright's default end screenshot is the final viewport. If the proving UI is scrolled off,

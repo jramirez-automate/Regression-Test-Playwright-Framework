@@ -1,5 +1,6 @@
-import { test as base, expect } from "@playwright/test";
+import { test as base, expect, type APIRequestContext } from "@playwright/test";
 
+import { apiContext } from "./utils/api";
 import { assertEnvironmentReachable } from "./utils/environment-guard";
 import {
 	bindWorkerIndex,
@@ -18,11 +19,22 @@ import {
  *      a dropped VPN turns into thirty minutes of locator timeouts and a
  *      failure report that blames your selectors.
  *
+ * API specs get `api` (this environment's auth) and `anonApi` (no credentials),
+ * both disposed after the test — see `src/utils/api.ts`.
+ *
  * Keeping this in one wrapper is also what makes a cross-cutting change — a new
  * fixture, a trace hook, a tag-based skip — a one-file edit rather than a sweep
  * through every spec.
  */
-export const test = base.extend<{ _envGuard: void }, { _workerAccount: void }>({
+type TestFixtures = {
+	_envGuard: void;
+	/** API client for `API_BASE_URL` with this environment's auth. */
+	api: APIRequestContext;
+	/** API client with no credentials, for 401 checks and public endpoints. */
+	anonApi: APIRequestContext;
+};
+
+export const test = base.extend<TestFixtures, { _workerAccount: void }>({
 	_workerAccount: [
 		async ({}, use, workerInfo) => {
 			bindWorkerIndex(workerAccountIndex(workerInfo.parallelIndex));
@@ -48,6 +60,21 @@ export const test = base.extend<{ _envGuard: void }, { _workerAccount: void }>({
 		void _envGuard;
 		await use(page);
 	},
+	api: async ({}, use, testInfo) => {
+		const context = await apiContext({
+			storageState: workerStorageStatePath(
+				workerAccountIndex(testInfo.parallelIndex),
+			),
+		});
+		await use(context);
+		await context.dispose();
+	},
+	anonApi: async ({}, use) => {
+		const context = await apiContext({ auth: "none" });
+		await use(context);
+		await context.dispose();
+	},
 });
 
 export { expect };
+export type { APIRequestContext, APIResponse } from "@playwright/test";

@@ -50,6 +50,7 @@ worse than none.
 | Checkout — details | `/checkout-step-one.html` | `CheckoutPage` | Reachable only from the cart |
 | Checkout — overview | `/checkout-step-two.html` | `CheckoutPage` | Reached via Continue, not by URL |
 | Order confirmation | `/checkout-complete.html` | `CheckoutPage` | |
+| Posts API (demo) | `API_BASE_URL` + `posts`, `posts/<id>` | `api` fixture | JSONPlaceholder — answers writes with 201 and stores nothing |
 
 ### Helpers index
 
@@ -67,6 +68,11 @@ dropdown, modal or download code.
 | Dismiss a cookie banner / walkthrough blocking the page | `BasePage.dismissBlockingDialog()` | `src/pages/BasePage.ts` |
 | Retry a specific known-flaky control | `retryClick` / `retryFill` | `src/utils/retry.ts` |
 | Capture the proving frame before dismissing | `attachSubject` / `attachCloseUp` | `src/utils/evidence.ts` |
+| Call the API with this environment's auth | `api` fixture (`anonApi` for no credentials), built by `apiContext()` | `src/fixtures.ts`, `src/utils/api.ts` |
+| Attach an API response as the case's proof | `readBody()` | `src/utils/api.ts` |
+| Status assertion that shows URL and body on failure | `describeResponse()` | `src/utils/api.ts` |
+| Schema-check a response, naming the broken field | `parseWith()` (zod) | `src/utils/api.ts` |
+| Delete API-created data after a test | `CleanupRegistry<APIRequestContext>` | `src/utils/cleanup.ts` |
 
 ---
 

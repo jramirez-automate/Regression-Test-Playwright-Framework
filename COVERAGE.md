@@ -8,6 +8,7 @@ the next person will otherwise spend a day rediscovering why.
 
 | Date | Ticket | Feature | Specs | Criteria covered | Not automated (and why) |
 | --- | --- | --- | --- | --- | --- |
+| 2026-09-27 | DEMO-003 | Posts API (example) | `src/tests/posts/posts.api.spec.ts` | Post read by id; unknown id is 404; create echoes the title | Persistence — JSONPlaceholder fakes writes and stores nothing |
 | 2026-05-04 | PROJ-103 | Checkout | `src/tests/checkout/checkout.spec.ts` | Order completes and confirms; postcode is required | Payment capture — no sandbox gateway in this environment |
 | 2026-05-04 | PROJ-102 | Product catalogue | `src/tests/catalog/inventory.spec.ts` | Catalogue renders; sort by price; sort by name | — |
 | 2026-05-04 | PROJ-101 | Authentication | `src/tests/auth/login.spec.ts` | Valid login; locked-out account is rejected with a reason | SSO path — no test identity provider |

@@ -17,6 +17,10 @@ work. Follow `AGENTS.md` and the full rulebook in `CLAUDE.md`. Key rules:
 - **Name every created entity with `e2eName()`** (`src/utils/test-data.ts`) and delete it in
   `test.afterEach` via `CleanupRegistry` (LIFO). Register teardown at creation time — a test
   that fails midway still has to clean up. Cleanup never throws.
+- **API specs** are `src/tests/<feature>/<name>.api.spec.ts`. Call the API through the `api` /
+  `anonApi` fixtures (never the built-in `request`), read bodies with `readBody()` so each case
+  carries its response as evidence, and start from `templates/api.spec.template.ts`. Details:
+  the `api-testing` skill.
 - **Ask before beta / pre-production / production runs.** Never start Playwright — a regression,
   a single spec, evidence capture, or a dispatched agent — on those environments until the user
   explicitly approves that environment in this conversation. Local, dev, qa and staging may run
