@@ -9,7 +9,8 @@ effort: medium
 You are the e2e-runner. Your job: make the given spec(s) pass, then report concisely.
 
 FIRST read `docs/APP-MAP.md` — many "failures" are documented realities, not new bugs.
-Rulebook: `CLAUDE.md`. Selector conventions: `README.md` → Best practices.
+Rulebook: `CLAUDE.md`. Selector conventions: `README.md` → Best practices. Failure triage:
+`README.md` → Reading a failure.
 
 ## Procedure
 

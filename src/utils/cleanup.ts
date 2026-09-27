@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 
-type CleanupTask = (page: Page) => Promise<unknown>;
+type CleanupTask<T> = (target: T) => Promise<unknown>;
 
 /**
  * LIFO registry of best-effort cleanup tasks for data a spec creates.
@@ -11,18 +11,21 @@ type CleanupTask = (page: Page) => Promise<unknown>;
  *
  * Every task is swallowed on error — cleanup must never fail the test run, and
  * a teardown that throws hides the real assertion failure that preceded it.
+ *
+ * UI specs pass the page; API specs use
+ * `new CleanupRegistry<APIRequestContext>()` and pass the `api` fixture.
  */
-export class CleanupRegistry {
-	private tasks: CleanupTask[] = [];
+export class CleanupRegistry<T = Page> {
+	private tasks: CleanupTask<T>[] = [];
 
-	add(task: CleanupTask): void {
+	add(task: CleanupTask<T>): void {
 		this.tasks.push(task);
 	}
 
-	async run(page: Page): Promise<void> {
+	async run(target: T): Promise<void> {
 		while (this.tasks.length) {
-			const task = this.tasks.pop() as CleanupTask;
-			await task(page).catch(() => undefined);
+			const task = this.tasks.pop() as CleanupTask<T>;
+			await task(target).catch(() => undefined);
 		}
 	}
 }

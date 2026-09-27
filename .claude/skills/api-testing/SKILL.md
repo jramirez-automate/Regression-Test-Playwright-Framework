@@ -11,19 +11,28 @@ disagree, `CLAUDE.md` wins.
 ## Setup
 
 - Import `test` / `expect` from `src/fixtures.ts`, never `@playwright/test`.
-- Get an authenticated context from `apiContext()` (`src/utils/api.ts`) and
-  `dispose()` it after the test — each context holds a socket pool. It sends
-  `Authorization: Bearer <API_TOKEN>` when set; otherwise call `bearerToken()`
-  (exchanges the run's credentials at `API_TOKEN_PATH`) and pass it as `token`.
-- Do **not** rely on the built-in `request` fixture: it inherits
-  `use.baseURL`, which is the app (UI) origin, not `API_BASE_URL`, and it
-  carries no auth. Use `playwright.request.newContext({ baseURL: apiBaseURL() })`
-  only for deliberately unauthenticated calls (the 401 test).
-- If `API_BASE_URL` has a path (`https://host/api/`), end it with `/` and write
-  request paths **without** a leading slash (`"orders/42"`) — a leading `/`
-  resolves against the host root and drops the `/api/` prefix.
-- Name specs `<feature>.api.spec.ts` beside the UI spec of the same feature —
-  by domain, never by ticket. Tag with the ticket like any spec.
+- Use the **`api`** fixture, never the built-in `request` fixture: `request`
+  inherits `use.baseURL` (the UI origin) and carries no auth. `api` is built by
+  `apiContext()` in `src/utils/api.ts` for `API_BASE_URL` (falls back to
+  `BASE_URL`) and disposed after the test. Its auth is `API_TOKEN` when set
+  (header and scheme from `API_AUTH_HEADER` / `API_AUTH_SCHEME`, default
+  `Authorization: Bearer`), otherwise the worker's signed-in browser session.
+  For a login-exchanged token, call `bearerToken()` (posts the run's
+  credentials to `API_TOKEN_PATH`) and pass it to `apiContext({ token })`.
+- Use **`anonApi`** for deliberately unauthenticated calls (the 401 test).
+- Real values for `API_BASE_URL` / `API_TOKEN` live only in gitignored
+  `.env.<env>` files; `.env.example` documents them.
+- If `API_BASE_URL` has a path (`https://host/api/`), `apiBaseURL()` keeps it
+  and adds the trailing `/`; write request paths **without** a leading slash
+  (`"orders/42"`) — a leading `/` resolves against the host root and drops the
+  `/api/` prefix.
+- Start from `templates/api.spec.template.ts`. The worked example is
+  `src/tests/posts/posts.api.spec.ts`.
+- Name specs `src/tests/<feature>/<name>.api.spec.ts` beside the UI spec of the
+  same feature — by domain, never by ticket. Tag with the ticket like any spec.
+- Cleanup: `new CleanupRegistry<APIRequestContext>()`, run with the `api`
+  fixture in `afterEach`. Register the delete as soon as the record exists,
+  before asserting on it.
 - Data safety, `e2eName()`, `CleanupRegistry`, env-run approval and the TDD
   loop (one slice, red proof or sensitivity check) apply exactly as for UI specs.
 
@@ -40,20 +49,20 @@ disagree, `CLAUDE.md` wins.
 1. Copy the exact request from the browser (DevTools → Network → Fetch/XHR):
    path, query params, method and headers.
 2. Assert the status first, with the URL and the start of the body as the
-   message: `expect(res.status(), debugInfo).toBe(200)` where `debugInfo` is
-   `res.url()` plus the first ~500 chars of `await res.text()`.
+   message: `expect(res.status(), await describeResponse(res)).toBe(200)`.
 3. Then assert the body against expectations derived from the **inputs**
    (search term, sort order, the `e2eName()` you created) — never values read
    back from the same response.
 4. Cover the negatives the endpoint owns: 401 without a token, empty / no
    match, invalid input (400 / 422), 403 where a lower-privilege user exists.
-5. Attach the raw body (`test.info().attach("response.json", …)`) so the
-   report shows what the server returned. Read with `res.text()` then
-   `JSON.parse` — it tolerates `204 No Content` empty bodies.
-6. Schema checks (optional, needs `zod`): build the schema from fields the
-   server actually returns, keep `z.object` non-strict so new fields don't
-   fail, derive the TS type with `z.infer`, and assert via `safeParse` +
-   `z.prettifyError` so the failure names the exact field path.
+5. Read the body with `readBody(res, test.info())`. It attaches the request
+   URL, status and body as `response.json` — the case's evidence, which the
+   evidence reporter saves as `<test>-<env>-response.json` — and tolerates
+   `204 No Content` empty bodies.
+6. Schema checks with `zod`: build the schema from fields the server actually
+   returns, keep `z.object` non-strict so new fields don't fail, and assert with
+   `parseWith(schema, body)`, which returns the typed body and names the exact
+   field path on failure.
 
 ## Readable steps (for manual QA)
 
@@ -69,25 +78,19 @@ manual QA engineer reads. Write every test as `test.step()` blocks, not comments
 - Send the request inside the WHEN step so the attached `response.json` shows
   under that step in the report.
 - Keep the `expect` inside the THEN / AND step it proves.
-- `try` / `finally` (e.g. `dispose()`) stays outside the steps.
 
 ```typescript
-test("an unknown order id returns 404", async () => {
-	const api = await apiContext();
-	try {
-		const orderId = await test.step("GIVEN an order id that does not exist", () => e2eName("NoSuchOrder"));
+test("an unknown order id returns 404", async ({ api }) => {
+	const orderId = await test.step("GIVEN an order id that does not exist", () => e2eName("NoSuchOrder"));
 
-		const res = await test.step(`WHEN we fetch order "${orderId}"`, async () => {
-			const res = await api.get(`orders/${orderId}`);
-			await test.info().attach("response.json", { body: await res.text(), contentType: "application/json" });
-			return res;
-		});
+	const res = await test.step(`WHEN we fetch order "${orderId}"`, async () => {
+		const res = await api.get(`orders/${orderId}`);
+		await readBody(res, test.info());
+		return res;
+	});
 
-		await test.step("THEN the server answers 404 Not Found", () => {
-			expect(res.status(), res.url()).toBe(404);
-		});
-	} finally {
-		await api.dispose();
-	}
+	await test.step("THEN the server answers 404 Not Found", async () => {
+		expect(res.status(), await describeResponse(res)).toBe(404);
+	});
 });
 ```

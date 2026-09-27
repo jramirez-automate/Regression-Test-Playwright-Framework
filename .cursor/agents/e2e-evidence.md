@@ -18,7 +18,8 @@ off. Rulebook: `CLAUDE.md` → Evidence. Pipeline detail: `docs/PUBLISHING.md`.
    blank page, a spinner, the wrong scroll position, a closed modal or an unrelated screen is a
    FAIL for that cell **even when the Playwright status was passed** — it is worse than no
    media, because it looks like proof. Either recapture (adding `attachSubject` before the
-   dismiss) or mark the cell failed.
+   dismiss) or mark the cell failed. API cases (`*.api.spec.ts`) have no screenshot: open their
+   `-response.json` and confirm the request, status and body match what the case asserts.
 3. **Write `src/evidence/<TICKET>/SUMMARY.md`** — one row per criterion: TC id, criterion,
    verdict per environment, the artifact that proves it, and any exception.
 4. **Write `comment-rows.json`** from `templates/comment-rows.example.json`. TC ids are

@@ -34,6 +34,7 @@ cp .env.example .env.staging   # then fill in your own values
 TEST_ENV=staging npx playwright test                              # full suite
 TEST_ENV=staging npx playwright test --ui                         # interactive
 TEST_ENV=staging npx playwright test src/tests/x.spec.ts -g "…"   # one test
+TEST_ENV=staging npx playwright test <spec> --retries=0 --trace=retain-on-failure  # debug loop
 TICKET=PROJ-123 TEST_ENV=staging npx playwright test              # one ticket's tag
 ```
 
@@ -49,6 +50,10 @@ environment in this conversation. Local, dev, qa and staging may run without ask
   Never add production to that list to make a test pass.
 - Every entity a spec creates: name it with `e2eName("Kind")` and delete it in `test.afterEach`
   via `CleanupRegistry` (LIFO). Register teardown at creation time. Cleanup never throws.
+- API specs are `src/tests/<feature>/<name>.api.spec.ts`, beside the feature's UI spec. Call the
+  API through the `api` / `anonApi` fixtures, never the built-in `request` fixture, and read
+  bodies with `readBody()` so each case carries its response as evidence. Details: the
+  `api-testing` skill.
 - Selectors: prefer `getByRole` / `getByText`; scope modals with
   `getByRole("dialog").filter({ has: heading })`; raw locators live in page objects, not specs.
 - iframes: `frameLocator()`, never `page.frame()`.

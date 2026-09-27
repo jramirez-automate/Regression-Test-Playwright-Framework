@@ -45,8 +45,15 @@ export type {
 	ModalThenToastOptions,
 } from "./interactions";
 
-export { apiContext, bearerToken } from "./api";
-export type { ApiContextOptions } from "./api";
+export {
+	apiContext,
+	bearerToken,
+	defaultApiAuth,
+	describeResponse,
+	parseWith,
+	readBody,
+} from "./api";
+export type { ApiAuth, ApiContextOptions } from "./api";
 
 export { attachSubject, attachCloseUp, attachClippedMenu } from "./evidence";
 

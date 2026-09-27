@@ -21,7 +21,7 @@ interface EvidenceReporterOptions {
 
 /**
  * Evidence reporter — active only in evidence mode (wired in playwright.config.ts
- * when EVIDENCE=true). Copies each test's screenshot/video/trace attachments to
+ * when EVIDENCE=true). Copies each test's screenshot/video/trace/response attachments to
  * <outputDir>/ under a descriptive name derived from the test title AND the env,
  * so develop and beta-au artifacts coexist:
  *
@@ -29,6 +29,7 @@ interface EvidenceReporterOptions {
  *   src/evidence/PROJ-123/checkout-rejects-empty-postcode-staging.webm
  *   src/evidence/PROJ-123/checkout-rejects-empty-postcode-prod.png
  *   src/evidence/PROJ-123/checkout-rejects-empty-postcode-staging-trace.zip   (trace)
+ *   src/evidence/PROJ-123/unknown-order-returns-404-staging-response.json    (API case, from readBody)
  *
  * Failed tests keep their artifacts too, suffixed "-FAILED", so a regression
  * bundle shows exactly what broke. Copies happen in onEnd because video files
@@ -71,6 +72,7 @@ class EvidenceReporter implements Reporter {
 				path?: string;
 				body?: Buffer;
 			}[] = [];
+			let responses = 0;
 			for (const attachment of result.attachments) {
 				const fromBody =
 					!attachment.path &&
@@ -99,7 +101,11 @@ class EvidenceReporter implements Reporter {
 				}
 
 				let name: string | undefined;
-				if (attachment.name === "video") {
+				if (attachment.contentType === "application/json") {
+					// API cases have no screen: the recorded response is their proof.
+					responses += 1;
+					name = `${base}-response${responses > 1 ? `-${responses}` : ""}.json`;
+				} else if (attachment.name === "video") {
 					name = `${base}${ext}`;
 				} else if (attachment.name === "trace") {
 					name = `${base}-trace${ext}`;

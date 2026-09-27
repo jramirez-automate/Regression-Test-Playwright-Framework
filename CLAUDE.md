@@ -47,6 +47,10 @@ Keeps an orchestrating session small and its reports readable.
   still has to leave the environment as it found it.
 - **Prefer the API for prerequisite data** (`src/utils/api.ts`); drive the UI only for the
   behaviour under test. The money assertion always stays on the real UI.
+- **API specs** (`<feature>/<name>.api.spec.ts`) cover contract facts the UI cannot show —
+  status codes, field types, auth refusals. They use the `api` / `anonApi` fixtures, clean up
+  with `new CleanupRegistry<APIRequestContext>()`, and read bodies with `readBody()`, whose
+  `response.json` is the case's evidence in place of a screenshot.
 - Tenant / organisation names come from `tenantName()` — never hardcoded.
 - Credentials live only in gitignored `.env.*` / `.env.publish`. NEVER in a tracked file.
 
