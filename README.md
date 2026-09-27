@@ -332,7 +332,34 @@ npx playwright test src/tests/checkout/checkout.spec.ts -g "refuses to continue"
 | What | When | Where |
 | --- | --- | --- |
 | TCP environment guard | Before every test | Throws in ~3s if the host is down (`SKIP_URL_CHECK=1` to skip) |
-| Screenshot / video / trace | On failure, or always when `EVIDENCE=true` | `src/test-results/` or `src/evidence/<TICKET>/` |
+| Screenshot | On failure, or always when `EVIDENCE=true` | `src/test-results/` or `src/evidence/<TICKET>/` |
+| Video / trace | On the first retry, or always when `EVIDENCE=true` (video also when headed) | `src/test-results/` or `src/evidence/<TICKET>/` |
+
+### Reading a failure
+
+A failing test retries once locally and twice in CI, and the trace and video are recorded
+only on that retry. That suits a suite run, but in a fix-and-rerun loop it doubles every run,
+leaves the first failure without a trace, and lets a flake pass on its retry. While debugging,
+turn both off:
+
+```bash
+TEST_ENV=staging npx playwright test src/tests/checkout/checkout.spec.ts --retries=0 --trace=retain-on-failure
+```
+
+Each failing test gets a folder in `src/test-results/`. Read it in this order:
+
+1. **The error message** in the terminal.
+2. **`error-context.md`** — the page's accessibility snapshot at the moment of failure. It
+   usually shows why a locator missed: a different accessible name, a second mounted dialog, or
+   an element not rendered yet.
+3. **The failure screenshot.**
+4. **`trace.zip`**, when the first three aren't enough:
+   `npx playwright show-trace src/test-results/<test>/trace.zip` opens the step-by-step viewer.
+
+The `e2e-runner` agent follows the same order and flags, except it never opens `show-trace` (a
+GUI it cannot see). With retries off, a throttled login fails straight away instead of being
+retried; rerun with `E2E_REUSE_AUTH=1` rather than changing the spec. Leave these flags off
+`EVIDENCE=true` runs, which already record everything.
 
 ### Parallelism
 
@@ -655,6 +682,7 @@ const name = "My Order";         // WRONG — collisions and leftover rows
 | Iframe elements not found | `frameLocator()`, not `page.locator()` |
 | Leftover `E2E-*` rows | `e2eName()` + `CleanupRegistry` in `afterEach` |
 | Login throttled | `E2E_REUSE_AUTH=1` to reuse `.auth/user.json` |
+| A failure has no trace, or a flake passed on retry | Rerun with `--retries=0 --trace=retain-on-failure` — see [Reading a failure](#reading-a-failure) |
 | Pre-commit hook silent | `core.hooksPath` should be `.husky` (re-run `npm install`) |
 | Playwright browsers missing | `npx playwright install --with-deps chromium` |
 | Evidence PNG is blank or the wrong screen | Scroll the subject into view and attach before dismissing — see [Evidence](#evidence) |
