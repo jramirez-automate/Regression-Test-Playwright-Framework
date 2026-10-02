@@ -1,5 +1,6 @@
 {
 	"$comment": "Input for `node scripts/zephyr.mjs create --spec <path>`. Copy to src/evidence/<TICKET>/zephyr-spec.json. Write this from the SEAM TABLE, before any Playwright spec exists — the cases are the design, not a transcript of the code.",
+	"$labels": "Every case is labelled with the ticket key and Automated (unless \"manual\": true). \"layer\": \"api\" adds API — name those cases \"Verify (API) …\" and plan one only when it maps to a requirement. Extra labels go in a case's \"labels\" array.",
 	"$stepsConvention": "Numbered USER actions, one discrete action per step. expectedResult belongs on the case (applied to the last step) and names one observable outcome. Never write framework internals — getByRole, afterEach, file paths — into a step: a manual tester reads these next release.",
 
 	"folderName": "[PROJ-123] Checkout regression",
@@ -36,6 +37,15 @@
 				"Select Continue"
 			],
 			"expectedResult": "Validation reads \"Error: Postal Code is required\" and the order overview does not open."
+		},
+		{
+			"tc": "TC-003",
+			"name": "Verify (API) an unknown order id returns 404",
+			"layer": "api",
+			"steps": [
+				"Send GET /orders/{id} with an order id that does not exist, as a signed-in shopper"
+			],
+			"expectedResult": "The status is 404 Not Found."
 		}
 	]
 }

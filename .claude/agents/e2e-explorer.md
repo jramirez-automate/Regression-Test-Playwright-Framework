@@ -139,16 +139,23 @@ Steps:
 1. <action> — selector: <locator code> — wait: <condition>
 2. ...
 Success signals: toast "<exact text>", URL /.../
+API map (endpoints the flow calls, from the network panel or the data hooks):
+- <METHOD> <path> — auth: <user | anon> — ok: <status + deciding body field> — refusals: <status: when>
 Data created (needs cleanup): <entity kinds + where the delete UI lives>
 Gotchas: <dynamic ids, portals, debounced search, etc.>
 Proposed test slices (one per criterion — feeds the seam table, before specs):
-1. <criterion> → "<suggested test title>" — money assertion: <observable signal>;
+1. <criterion> → "<suggested test title>" — layer: API | UI | UI + API —
+   money assertion: <observable signal, or status + body field for API>;
    behaviour live on the target environment: yes | no | unsure
 Page-object stubs (MISSING methods to add): <PageObject.method(args) — what it does> ...
 Spec skeleton: start from templates/spec.template.ts → src/tests/<feature>/<name>.spec.ts;
    describe "<feature>" { tag: "@<TICKET>" }; one test per slice; nav via <goto*()>;
    reuse <helpers>; cleanup via <delete*ByName>.
 ```
+
+A slice is API when the requirement is a contract fact the UI cannot show (a status, a field, a
+refusal), UI when it is what the user sees, and UI + API when both matter. API slices go in
+`src/tests/<feature>/<name>.api.spec.ts` from `templates/api.spec.template.ts`.
 
 For the slices, report only whether the behaviour appears to exist on the target environment.
 The main conversation makes the final RED/GREEN expected-first-run call.

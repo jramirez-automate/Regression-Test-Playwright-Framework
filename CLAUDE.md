@@ -150,9 +150,15 @@ Two surfaces, different jobs — do not substitute one for the other.
   `Environment:` / `URL: <the exact page where it reproduces, not the site root>` /
   `Browser ver: <the Playwright-bundled Chromium actually used>`. Take the URL from `page.url()`
   at the point of failure and the browser from `npx playwright --version`.
-- **A raised bug gets the failure media too.** Copy the `*-FAILED.png` / `*-FAILED.webm` into
-  `src/evidence/<BUG-KEY>/`, write a minimal `comment-rows.json` there, and attach. Proof that
-  lives only on the parent ticket makes the bug unreadable on its own.
+- **A raised bug gets the failure media too.** Copy the `*-FAILED.png` / `*-FAILED.webm` /
+  `*-FAILED-trace.zip` into `src/evidence/<BUG-KEY>/`, write a minimal `comment-rows.json` there,
+  attach, then `npm run evidence:embed`. The embed builds a redacted `<BUG-KEY>-<env>.har` from
+  the trace and lists the failing calls under a Network capture note. Proof that lives only on
+  the parent ticket makes the bug unreadable on its own.
+- **UI Tests, then API Tests.** Rows with `"layer": "api"` publish in their own table after the
+  UI one, TC ids running on. Each table has a title row, then `TC | Scenario | Steps | Expected
+  result | <env>…`, then a bold row per `"group"` — the spec's `test.describe` title, so name
+  describes as feature areas. An API case's proof is its `-response.json`, shown as a file card.
 - `src/evidence/` is gitignored — regenerate on demand.
 
 ## Zephyr cases

@@ -20,6 +20,12 @@ stack trace is a step they cannot follow.
   `test.skip`, file paths). Do **not** use filler like "Open the app" plus the test title when
   the ticket already has real steps.
 - Name: one sentence starting **Verify …**. `"tc": "TC-001"` — zero-padded.
+- An API case (`*.api.spec.ts`) carries `"layer": "api"` and a **Verify (API) …** name. Its steps
+  name the request in plain words ("Send GET /orders/{id} with an unknown id"), and its expected
+  result is the status and the field that decides it. Plan one only when it maps to a
+  requirement. UI cases come first; API case ids run on after them.
+- Labels are automatic: the ticket key, `Automated` (unless `"manual": true`), and `API` for an
+  API case. Add others with `"labels"`.
 
 ## Order of creation
 

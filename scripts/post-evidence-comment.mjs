@@ -7,6 +7,9 @@
  *   TICKET=PROJ-123 node scripts/post-evidence-comment.mjs --rows src/evidence/PROJ-123/comment-rows.json
  *   … --comment-id 1234857   update an existing comment instead of adding one
  *   … --dry-run              print the ADF, post nothing
+ *   … --uploaded-before 2026-09-28T12:00:00Z
+ *                            resolve media from uploads before that moment, so
+ *                            an old comment keeps the captures it first showed
  *
  * Prerequisite: the files are already attached (`npm run evidence:attach`).
  *
@@ -27,7 +30,11 @@
  *       "staging": { "result": "✅ Pass", "media": ["x-staging.png", "x-staging.webm"] },
  *       "prod":    { "result": "✅ Pass", "media": ["x-prod.png"] } },
  *     // Single-column form, still accepted:
- *     { "tc": "TC-002", "case": "…", "result": "✅ Pass", "media": ["y.png"] }
+ *     { "tc": "TC-002", "case": "…", "result": "✅ Pass", "media": ["y.png"] },
+ *     // "layer": "api" puts a row under API Tests (UI rows go under UI Tests);
+ *     // "group" is the feature area, usually the spec's describe title.
+ *     { "tc": "TC-003", "case": "…", "layer": "api", "group": "Orders API",
+ *       "staging": { "result": "✅ Pass", "media": ["z-staging-response.json"] } }
  *   ],
  *   "envColumns": [{ "key": "staging", "header": "Staging" }],   // optional: fixes column order
  *   "links":    [{ "label": "[PROJ-123] Checkout - Test Plan", "url": "…" }],
@@ -44,12 +51,12 @@ import fs from "node:fs";
 import {
 	fail,
 	flagValue,
+	jiraBaseUrl,
 	requireTicket,
 } from "./lib/config.mjs";
 import {
 	attachmentsByFilename,
 	issueUrl,
-	jiraBaseUrl,
 	jiraSend,
 	mediaUuid,
 } from "./lib/jira.mjs";
@@ -59,10 +66,12 @@ import {
 	cell,
 	header,
 	heading,
+	centered,
 	link,
 	mediaThumb,
 	orderedList,
 	p,
+	spanRow,
 	text,
 } from "./lib/adf.mjs";
 
@@ -71,9 +80,19 @@ const ticket = requireTicket();
 const rowsPath = flagValue(argv, "--rows");
 const commentId = flagValue(argv, "--comment-id");
 const dryRun = argv.includes("--dry-run");
+const uploadedBeforeRaw = flagValue(argv, "--uploaded-before");
+const uploadedBefore = uploadedBeforeRaw ? new Date(uploadedBeforeRaw) : undefined;
+if (uploadedBefore && Number.isNaN(uploadedBefore.getTime())) {
+	fail(`--uploaded-before: not a date: ${uploadedBeforeRaw}`);
+}
 
 if (!rowsPath || !fs.existsSync(rowsPath)) fail("Pass --rows <comment-rows.json>.");
 const spec = JSON.parse(fs.readFileSync(rowsPath, "utf8"));
+
+const badLayer = (spec.rows ?? []).filter((r) => r?.layer != null && !["ui", "api"].includes(r.layer));
+if (badLayer.length) {
+	fail(`Invalid layer on ${badLayer.map((r) => r.tc ?? r.case).join(", ")} — use "ui" or "api".`);
+}
 
 const versionUnderTest = (spec.version ?? process.env.APP_VERSION ?? "").trim();
 
@@ -91,7 +110,9 @@ if (badTc.length) {
 // A row key is an env column when its value is an object carrying result/note/
 // media. Declaring `envColumns` pins the order and the header text; otherwise
 // columns appear in first-seen order with a title-cased header.
-const RESERVED = new Set(["tc", "case", "by", "steps", "expectedResult", "result", "media", "note"]);
+const RESERVED = new Set([
+	"tc", "case", "by", "steps", "expectedResult", "result", "media", "note", "layer", "group",
+]);
 const isEnvCell = (v) =>
 	v && typeof v === "object" && !Array.isArray(v) &&
 	("result" in v || "note" in v || "media" in v);
@@ -115,7 +136,7 @@ const envColumns = declared
 const perEnv = envColumns.length > 0;
 
 // ── Resolve every referenced file to its media UUID ─────────────────────────
-const attachments = await attachmentsByFilename(ticket);
+const attachments = await attachmentsByFilename(ticket, { uploadedBefore });
 const uuidByFilename = new Map();
 const neededFiles = [
 	...new Set([
@@ -162,57 +183,84 @@ const envCell = (data) => {
 	return cell(...content);
 };
 
-const tableRows = perEnv
-	? [
-			{
-				type: "tableRow",
-				content: [
-					header("TC"),
-					header("Case"),
-					header("Steps"),
-					header("Expected result"),
-					...envColumns.map((c) => header(c.header)),
-				],
-			},
-			...(spec.rows ?? []).map((row) => ({
-				type: "tableRow",
-				content: [
-					cell(p(text(row.tc, [{ type: "strong" }]))),
-					caseCell(row),
-					stepsCell(row),
-					expectedCell(row),
-					...envColumns.map((c) => envCell(row[c.key])),
-				],
-			})),
-		]
-	: [
-			{
-				type: "tableRow",
-				content: [
-					header("TC"),
-					header("Case"),
-					header("Steps"),
-					header("Expected result"),
-					header("Result"),
-					header("Evidence"),
-				],
-			},
-			...(spec.rows ?? []).map((row) => ({
-				type: "tableRow",
-				content: [
-					cell(p(text(row.tc, [{ type: "strong" }]))),
-					caseCell(row),
-					stepsCell(row),
-					expectedCell(row),
+const headerRow = {
+	type: "tableRow",
+	content: [
+		header("TC"),
+		header("Scenario"),
+		header("Steps"),
+		header("Expected result"),
+		...(perEnv
+			? envColumns.map((c) => header(c.header))
+			: [header("Result"), header("Evidence")]),
+	],
+};
+const columnCount = headerRow.content.length;
+
+const caseRow = (row) => ({
+	type: "tableRow",
+	content: [
+		cell(p(text(row.tc, [{ type: "strong" }]))),
+		caseCell(row),
+		stepsCell(row),
+		expectedCell(row),
+		...(perEnv
+			? envColumns.map((c) => envCell(row[c.key]))
+			: [
 					cell(p(text(row.result ?? "—"))),
 					cell(
 						...((row.media ?? []).length
 							? row.media.map(thumb)
 							: [p(text(row.note ?? "—"))]),
 					),
-				],
-			})),
-		];
+				]),
+	],
+});
+
+// UI cases first, then API cases, each in its own table. A bundle with no API
+// rows keeps a single untitled table. Consecutive rows sharing a `group` (the
+// spec's describe title) sit under one bold feature row.
+const rows = spec.rows ?? [];
+const sections = rows.some((r) => r.layer === "api")
+	? [
+			{ title: "UI Tests", rows: rows.filter((r) => r.layer !== "api") },
+			{ title: "API Tests", rows: rows.filter((r) => r.layer === "api") },
+		].filter((s) => s.rows.length)
+	: [{ title: undefined, rows }];
+
+const groupsOf = (sectionRows) => {
+	const groups = [];
+	for (const row of sectionRows) {
+		const last = groups.at(-1);
+		if (last && last.name === row.group) last.rows.push(row);
+		else groups.push({ name: row.group, rows: [row] });
+	}
+	return groups;
+};
+
+const caseRows = [];
+const sectionTables = sections.flatMap((section) => {
+	const content = [
+		...(section.title
+			? [spanRow(columnCount, centered(text(section.title, [{ type: "strong" }])), true)]
+			: []),
+		headerRow,
+	];
+	for (const group of groupsOf(section.rows)) {
+		if (group.name) {
+			content.push(spanRow(columnCount, p(text(group.name, [{ type: "strong" }]))));
+		}
+		for (const row of group.rows) {
+			const built = caseRow(row);
+			caseRows.push(built);
+			content.push(built);
+		}
+	}
+	return [
+		...(section.title ? [heading(5, section.title)] : []),
+		{ type: "table", attrs: { layout: "default" }, content },
+	];
+});
 
 // Findings: plain-string entries become description-only rows, for back-compat
 // with hand-written bundles.
@@ -260,7 +308,7 @@ const body = {
 			? [p(text("Version under test: ", [{ type: "strong" }]), text(versionUnderTest))]
 			: []),
 		heading(4, "Test Scenario"),
-		{ type: "table", attrs: { layout: "default" }, content: tableRows },
+		...sectionTables,
 		...(findings.length ? [heading(4, "Findings"), findingsTable] : []),
 		...(spec.links?.length
 			? [
@@ -278,7 +326,7 @@ const body = {
 };
 
 // ── Size guard ──────────────────────────────────────────────────────────────
-const size = adfSizeReport(body, tableRows);
+const size = adfSizeReport(body, [headerRow, ...caseRows]);
 console.log(
 	`  ADF ${size.bodyChars} chars — ${size.pct}% of the ${ADF_CHAR_LIMIT} limit ` +
 		`(${size.rows} row(s) @ ~${size.perRow} chars/row)`,

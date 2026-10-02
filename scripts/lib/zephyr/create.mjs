@@ -47,6 +47,20 @@ export async function run(argv = []) {
 	if (!specPath || !fs.existsSync(specPath)) fail("Pass --spec <zephyr-spec.json>.");
 	const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
 	if (!spec.tests?.length) fail("Spec has no tests.");
+	const badLayer = spec.tests.filter((t) => t.layer != null && !["ui", "api"].includes(t.layer));
+	if (badLayer.length) {
+		fail(`Invalid layer on ${badLayer.map((t) => t.tc ?? t.name).join(", ")} — use "ui" or "api".`);
+	}
+	// The ticket key keeps a release's cases findable; "API" separates contract
+	// cases from UI ones in a Zephyr search, since both share the ticket folder.
+	const labelsFor = (t) => [
+		...new Set([
+			ticket,
+			...(t.manual ? [] : ["Automated"]),
+			...(t.layer === "api" ? ["API"] : []),
+			...(t.labels ?? []),
+		]),
+	];
 
 	const settings = zephyrSettings();
 	const projectKey = projectKeyFrom(ticket);
@@ -76,7 +90,7 @@ export async function run(argv = []) {
 	console.log(`Cycle: "${cycleName}" → ${rootFolder} / ${cycleFolderName} [${cycleStatus}]`);
 	for (const t of spec.tests) {
 		console.log(
-			`  test: ${t.tc ? `${t.tc} ` : ""}${t.name} (${t.steps.length} steps) [${t.executionStatus ?? defaultExec}]`,
+			`  test: ${t.tc ? `${t.tc} ` : ""}${t.name} (${t.steps.length} steps) [${t.executionStatus ?? defaultExec}] labels: ${labelsFor(t).join(", ")}`,
 		);
 	}
 	if (dryRun) {
@@ -125,6 +139,7 @@ export async function run(argv = []) {
 			priorityName: spec.priorityName ?? settings.priorityName ?? "Normal",
 			statusName: spec.testCaseStatus ?? settings.testCaseStatus ?? "Approved",
 			folderId: ticketFolder.id,
+			labels: labelsFor(t),
 		});
 		await zephyr("POST", `/testcases/${tc.key}/teststeps`, {
 			mode: "OVERWRITE",
@@ -146,6 +161,7 @@ export async function run(argv = []) {
 			key: tc.key,
 			name: t.name,
 			...(t.tc ? { tc: t.tc } : {}),
+			...(t.layer ? { layer: t.layer } : {}),
 			executionStatus: t.executionStatus ?? defaultExec,
 			executionComment: t.executionComment ?? spec.executionComment ?? undefined,
 		});

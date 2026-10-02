@@ -23,7 +23,8 @@ costs the whole slice.
 ## 2. Explore
 
 Dispatch **e2e-explorer** with the feature and criteria. It returns a compact flow map — routes,
-selectors, waits, reusable page objects and helpers. Save it to
+selectors, waits, reusable page objects and helpers — plus an **API map** of the endpoints
+the feature calls, and a layer (API / UI / UI + API) for each proposed slice. Save it to
 `src/evidence/$1/flow-map.md`.
 
 Do NOT read app source yourself in this conversation. That is the whole point of the subagent.
@@ -32,11 +33,15 @@ Do NOT read app source yourself in this conversation. That is the whole point of
 
 Present a seam table for review — one row per criterion:
 
-| TC | Criterion | Seam (page object) | Money assertion | Expected first run |
-| --- | --- | --- | --- | --- |
+| TC | Criterion | Layer | Seam (page object / endpoint) | Money assertion | Expected first run |
+| --- | --- | --- | --- | --- | --- |
 
-TC ids are `TC-001`, `TC-002`, … Wait for the user to confirm the table before going further:
-this is the design, and it is far cheaper to change here than after the specs exist.
+Layer is **API** for a contract fact the UI cannot show (a status, a field, a refusal), **UI** for
+what the user sees, **UI + API** when both matter — that is two rows. Plan an API case only when
+it maps to a requirement, never to pad coverage. TC ids are `TC-001`, `TC-002`, … with the UI
+rows first and the API rows running on after them. Wait for the user to confirm the table before
+going further: this is the design, and it is far cheaper to change here than after the specs
+exist.
 
 Then create the Zephyr cases in **planned** mode (`Not Executed`), from the seam table —
 **before any spec is written**:
@@ -47,7 +52,9 @@ TICKET=$1 npm run zephyr -- create --spec src/evidence/$1/zephyr-spec.json --dry
 ```
 
 Steps are numbered user actions; the expected result goes on the last step only; no framework
-internals. Only run it for real once the user approves, and only if the project uses Zephyr.
+internals. An API case carries `"layer": "api"` and a `Verify (API) …` name; it is labelled
+`API` beside the ticket key and `Automated`, so a Zephyr search can tell the two apart. Only run
+it for real once the user approves, and only if the project uses Zephyr.
 
 ## 4. Write the specs (TDD, one slice at a time)
 
@@ -63,6 +70,11 @@ For each row of the seam table, in order:
 4. Drive it green. Dispatch **e2e-runner** when triage gets long.
 5. Record the slice in `src/evidence/$1/tdd-log.md`.
 
+An API slice lives in `src/tests/<feature>/<name>.api.spec.ts`, scaffolded from
+`templates/api.spec.template.ts`. It calls through the `api` / `anonApi` fixtures and reads the
+body with `readBody()`, which writes the case's `-response.json` evidence. For a UI + API row,
+write the API slice first: it pins the contract the UI slice then relies on.
+
 Never write the next test until the current one is green. Never batch-write the file.
 
 ## 5. Run the full ticket
@@ -77,10 +89,17 @@ for that specific environment.
 ## 6. Evidence
 
 Dispatch **e2e-evidence**. It captures, verifies every artifact against its criterion, writes
-`SUMMARY.md`, prepares `comment-rows.json`, and attaches curated media.
+`SUMMARY.md`, prepares `comment-rows.json`, and attaches curated media. API rows carry
+`"layer": "api"` and their `-response.json` as media; every row carries `"group"`, the spec's
+describe title. The comment then splits into **UI Tests** and **API Tests** tables — each with a
+title row, `TC | Scenario | Steps | Expected result | <env>…`, and a bold row per group — and the
+Confluence plan follows the same layout (`templates/test-plan.html`).
 
 If a run exposed a product defect, **embed the proving screenshot in your reply to the user**
-(`![what it shows](/abs/path.png)`) in the same message that reports it.
+(`![what it shows](/abs/path.png)`) in the same message that reports it. A bug raised from it gets
+its own proof: copy the case's `*-FAILED.png`, `*-FAILED.webm` and `*-FAILED-trace.zip` into
+`src/evidence/<BUG-KEY>/`, attach, then `npm run evidence:embed`, which also builds a redacted
+`<BUG-KEY>-<env>.har` from the trace and lists the failing calls under a Network capture note.
 
 Post the Jira comment and publish the Confluence test plan only with explicit confirmation.
 

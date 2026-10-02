@@ -1,5 +1,5 @@
 {
-	"$comment": "Input for scripts/post-evidence-comment.mjs and the --from-rows flag of attach/embed/cleanup. Copy to src/evidence/<TICKET>/comment-rows.json and fill in. Media filenames must match files in that folder exactly — evidence-reporter.ts names them <test-title>-<env>.png|webm, with -FAILED appended for failures.",
+	"$comment": "Input for scripts/post-evidence-comment.mjs and the --from-rows flag of attach/embed/cleanup. Copy to src/evidence/<TICKET>/comment-rows.json and fill in. Media filenames must match files in that folder exactly — evidence-reporter.ts names them <test-title>-<env>.png|webm, with -FAILED appended for failures. Rows with \"layer\": \"api\" render under an API Tests table after the UI Tests one; \"group\" is the feature area (the spec's test.describe title) and becomes a bold row above its cases. An API case's proof is its -response.json, shown as a file card.",
 	"title": "Automated E2E regression — Checkout (2026-05-04)",
 	"intro": "Playwright regression for PROJ-123, run on staging and production. Each row links its criterion to the capture that proves it.",
 	"version": "v2.4.0",
@@ -10,6 +10,7 @@
 	"rows": [
 		{
 			"tc": "TC-001",
+			"group": "Checkout",
 			"case": "Completed order confirms back to the shopper",
 			"by": "src/tests/checkout/checkout.spec.ts",
 			"steps": [
@@ -34,6 +35,7 @@
 		},
 		{
 			"tc": "TC-002",
+			"group": "Checkout",
 			"case": "Checkout refuses to continue without a postcode",
 			"by": "src/tests/checkout/checkout.spec.ts",
 			"steps": [
@@ -50,6 +52,25 @@
 				]
 			},
 			"prod": { "note": "Not run — write flows are read-only in production." }
+		},
+		{
+			"tc": "TC-003",
+			"group": "Orders API",
+			"layer": "api",
+			"case": "An unknown order id returns 404",
+			"by": "src/tests/checkout/orders.api.spec.ts",
+			"steps": [
+				"Send GET /orders/{id} with an order id that does not exist, as a signed-in shopper"
+			],
+			"expectedResult": "The status is 404 Not Found.",
+			"staging": {
+				"result": "✅ Pass",
+				"media": ["an-unknown-order-id-returns-404-staging-response.json"]
+			},
+			"prod": {
+				"result": "✅ Pass",
+				"media": ["an-unknown-order-id-returns-404-prod-response.json"]
+			}
 		}
 	],
 	"findings": [

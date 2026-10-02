@@ -55,6 +55,7 @@ Severity: Critical | High | Medium | Low
 Priority: <suggested — the lead / PO decides>
 Found by: <TC-### in <KEY> evidence run | exploratory session "<mission>">
 Evidence: <attached screenshot / recording, embedded below>
+Network: <BUG-KEY>-<env>.har, the failing calls listed above it (automated runs)
 ```
 
 ## Writing rules
@@ -79,8 +80,9 @@ Evidence: <attached screenshot / recording, embedded below>
 ## Filing
 
 Show the draft and wait for an explicit yes — nothing is filed without it.
-After it's filed, the bug carries its own proof: the screenshot and recording
-are attached to **the bug**, not only to the ticket it was found on.
+After it's filed, the bug carries its own proof: the screenshot, recording
+and redacted HAR are attached to **the bug**, not only to the ticket it was
+found on.
 
 When the fix lands, retest with the bug's own steps on the environment where
 it was found, then rerun the related test cases. If nothing in the suite
@@ -92,14 +94,21 @@ would catch it coming back, add a case (`test-case-design`) and automate it.
 2. Attach and embed the failure media on the bug:
    ```
    mkdir -p src/evidence/<BUG-KEY>
-   cp src/evidence/<KEY>/*<case>*-FAILED.png src/evidence/<KEY>/*<case>*-FAILED.webm src/evidence/<BUG-KEY>/
-   # write src/evidence/<BUG-KEY>/comment-rows.json listing those files
+   cp src/evidence/<KEY>/*<case>*-FAILED.png src/evidence/<KEY>/*<case>*-FAILED.webm src/evidence/<KEY>/*<case>*-FAILED-trace.zip src/evidence/<BUG-KEY>/
+   # write src/evidence/<BUG-KEY>/comment-rows.json listing the png and webm
    TICKET=<BUG-KEY> npm run evidence:attach -- --from-rows src/evidence/<BUG-KEY>/comment-rows.json
    TICKET=<BUG-KEY> npm run evidence:embed -- --from-rows src/evidence/<BUG-KEY>/comment-rows.json
    ```
    A manual finding's screenshot or recording goes into
    `src/evidence/<BUG-KEY>/` and is attached the same way.
-3. Set the finding's `ticket` field to `<BUG-KEY>` in the parent
+3. Give the developer the network log. `evidence:embed` builds a
+   `<BUG-KEY>-<env>.har` from each `*-FAILED-trace.zip` in the bug's folder,
+   with auth headers, cookies and tokens redacted, attaches it, and lists the
+   failing calls under a **Network capture** note in the description. For a
+   manual finding, export the HAR from DevTools → Network, strip the
+   `Authorization` and `Cookie` headers yourself (it is uploaded as it is),
+   put it in `src/evidence/<BUG-KEY>/` and pass `--har <file>.har`.
+4. Set the finding's `ticket` field to `<BUG-KEY>` in the parent
    `src/evidence/<KEY>/comment-rows.json`.
-4. Browser version for automated runs: `npx playwright --version` (runs are
+5. Browser version for automated runs: `npx playwright --version` (runs are
    headless Chromium unless `HEADED=true`).

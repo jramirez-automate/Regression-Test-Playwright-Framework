@@ -67,7 +67,7 @@ export function mimeFor(name) {
 	if (/\.jpe?g$/i.test(name)) return "image/jpeg";
 	if (/\.gif$/i.test(name)) return "image/gif";
 	if (/\.md$/i.test(name)) return "text/markdown";
-	if (/\.json$/i.test(name)) return "application/json";
+	if (/\.(json|har)$/i.test(name)) return "application/json";
 	if (/\.zip$/i.test(name)) return "application/zip";
 	return "application/octet-stream";
 }
@@ -104,13 +104,17 @@ export async function uploadAttachment(ticket, name, filePath) {
  * filename → attachment, preferring the NEWEST upload of a repeated filename.
  * Re-attaching after a recapture leaves duplicates, and the API's order is not
  * guaranteed, so a naive last-wins map can pin a comment to the stale file.
+ *
+ * `uploadedBefore` (a Date) ignores uploads at or after it, so an old comment
+ * can be rebuilt against the media it originally showed.
  */
-export async function attachmentsByFilename(ticket) {
+export async function attachmentsByFilename(ticket, { uploadedBefore } = {}) {
 	const issue = await jiraGet(
 		`/rest/api/3/issue/${encodeURIComponent(ticket)}?fields=attachment`,
 	);
 	const byName = new Map();
 	for (const a of issue.fields?.attachment ?? []) {
+		if (uploadedBefore && Date.parse(a.created) >= uploadedBefore.getTime()) continue;
 		const prev = byName.get(a.filename);
 		if (!prev || Date.parse(a.created) >= Date.parse(prev.created)) {
 			byName.set(a.filename, a);

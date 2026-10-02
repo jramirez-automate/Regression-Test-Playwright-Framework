@@ -24,6 +24,27 @@ export const header = (label) => ({
 	attrs: {},
 	content: [p(text(label, [{ type: "strong" }]))],
 });
+/** A paragraph with centred text. */
+export const centered = (...content) => ({
+	type: "paragraph",
+	marks: [{ type: "alignment", attrs: { align: "center" } }],
+	content,
+});
+/** A row holding one cell across every column — a table's title or a feature group. */
+export const spanRow = (colspan, content, isHeader = false) => ({
+	type: "tableRow",
+	content: [
+		{
+			type: isHeader ? "tableHeader" : "tableCell",
+			attrs: colspan > 1 ? { colspan } : {},
+			content: [content],
+		},
+	],
+});
+export const bulletList = (paragraphs) => ({
+	type: "bulletList",
+	content: paragraphs.map((para) => ({ type: "listItem", content: [para] })),
+});
 export const orderedList = (items) => ({
 	type: "orderedList",
 	attrs: { order: 1 },
@@ -37,8 +58,20 @@ export const link = (label, href) =>
  * full-width bounding box and leaves a large blank gutter beside a narrow image.
  * Videos carry explicit dimensions so Media Services picks player chrome rather
  * than rendering a still.
+ *
+ * Anything that is not an image or a video (an API case's `-response.json`, a
+ * bug's `.har`) renders as a file card instead: `mediaSingle` would show a
+ * broken preview.
  */
+export const isVisualMedia = (filename) => /\.(png|jpe?g|gif|webp|webm|mp4|mov)$/i.test(filename);
+
+export const mediaFile = (id) => ({
+	type: "mediaGroup",
+	content: [{ type: "media", attrs: { type: "file", id, collection: "" } }],
+});
+
 export const mediaThumb = (filename, uuidByFilename) => {
+	if (!isVisualMedia(filename)) return mediaFile(uuidByFilename.get(filename));
 	const isVideo = /\.(webm|mp4|mov)$/i.test(filename);
 	return {
 		type: "mediaSingle",

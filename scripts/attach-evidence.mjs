@@ -8,7 +8,7 @@
  * traces, and dumping all of it buries the three files a reviewer needs.
  *
  *   TICKET=PROJ-123 npm run evidence:attach -- --from-rows src/evidence/PROJ-123/comment-rows.json
- *   TICKET=PROJ-123 npm run evidence:attach                # every .png/.webm + SUMMARY.md
+ *   TICKET=PROJ-123 npm run evidence:attach                # every .png/.webm/-response.json + SUMMARY.md
  *   TICKET=PROJ-123 npm run evidence:attach -- --dry-run
  *   TICKET=PROJ-123 npm run evidence:attach -- --traces    # include -trace.zip
  *   TICKET=PROJ-123 npm run evidence:attach -- --only finding-
@@ -18,9 +18,13 @@
  * the bug unreadable on its own:
  *
  *   mkdir -p src/evidence/<BUG-KEY>
- *   cp src/evidence/<TICKET>/*-FAILED.* src/evidence/<BUG-KEY>/
- *   # write src/evidence/<BUG-KEY>/comment-rows.json listing those files
+ *   cp src/evidence/<TICKET>/*<case>*-FAILED.* src/evidence/<TICKET>/*<case>*-FAILED-trace.zip src/evidence/<BUG-KEY>/
+ *   # write src/evidence/<BUG-KEY>/comment-rows.json listing the png/webm
  *   TICKET=<BUG-KEY> npm run evidence:attach -- --from-rows src/evidence/<BUG-KEY>/comment-rows.json
+ *   TICKET=<BUG-KEY> npm run evidence:embed -- --from-rows src/evidence/<BUG-KEY>/comment-rows.json
+ *
+ * The trace is not attached itself: `evidence:embed` turns it into a redacted
+ * `<BUG-KEY>-<env>.har` and attaches that instead.
  *
  * Credentials: .env.publish (gitignored).
  */
@@ -71,7 +75,7 @@ const files = fs
 		if (allowed) return name === "SUMMARY.md" || allowed.has(name);
 		if (only && !name.includes(only)) return false;
 		if (name === "SUMMARY.md") return true;
-		if (/\.(png|webm)$/i.test(name)) return true;
+		if (/\.(png|webm)$/i.test(name) || /-response(-\d+)?\.json$/i.test(name)) return true;
 		if (includeTraces && /-trace\.zip$/i.test(name)) return true;
 		return false;
 	})

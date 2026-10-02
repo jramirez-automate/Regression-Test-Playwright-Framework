@@ -100,9 +100,10 @@ through files:
    ```
    **Show a found bug in the chat:** embed the proving screenshot
    (`![what it shows](/abs/path.png)`) in the same reply that reports the defect.
-   **A raised bug gets the failure media too** — copy `*-FAILED.*` into
-   `src/evidence/<BUG-KEY>/`, write a minimal `comment-rows.json`, attach, then
-   `npm run evidence:embed` so the proof renders in the description.
+   **A raised bug gets the failure media too** — copy `*-FAILED.*` and `*-FAILED-trace.zip`
+   into `src/evidence/<BUG-KEY>/`, write a minimal `comment-rows.json`, attach, then
+   `npm run evidence:embed` so the proof renders in the description, with a redacted HAR built
+   from the trace. API rows (`"layer": "api"`) publish under their own API Tests table.
 6. **Persist** — append to `COVERAGE.md` and to the Navigation / Helpers indexes in
    `docs/APP-MAP.md`. Expensive navigation and reusable interactions get recorded once, never
    rebuilt.

@@ -19,18 +19,25 @@ off. Rulebook: `CLAUDE.md` → Evidence. Pipeline detail: `docs/PUBLISHING.md`.
    FAIL for that cell **even when the Playwright status was passed** — it is worse than no
    media, because it looks like proof. Either recapture (adding `attachSubject` before the
    dismiss) or mark the cell failed. API cases (`*.api.spec.ts`) have no screenshot: open their
-   `-response.json` and confirm the request, status and body match what the case asserts.
+   `-response.json` and confirm the request, status and body match what the case asserts. Quote
+   the status and the body field that decides the case in SUMMARY.md.
 3. **Write `src/evidence/<TICKET>/SUMMARY.md`** — one row per criterion: TC id, criterion,
    verdict per environment, the artifact that proves it, and any exception.
 4. **Write `comment-rows.json`** from `templates/comment-rows.example.json`. TC ids are
    `TC-001`, `TC-002`, … — zero-padded hyphen, never `TC1`. Sort by TC id before emitting;
    builder arrays grouped by feature otherwise publish out of order. Reference ONLY the media
-   the table needs.
+   the table needs. UI rows come first, API rows after with ids running on. Give every row
+   `"group"` (the spec's describe title) and every API row `"layer": "api"` with its
+   `-response.json` as media: the comment then renders UI Tests and API Tests tables, each with a
+   title row, `TC | Scenario | Steps | Expected result | <env>…` and a bold row per group, and the
+   response as a file card. Write `test-plan.html` in the same layout. Keep each
+   `*-FAILED-trace.zip`: a bug's HAR is built from it.
 5. **Attach** — `TICKET=<key> npm run evidence:attach -- --from-rows src/evidence/<key>/comment-rows.json`.
    Curated, not a dump of the folder.
 6. **Comment** — only with explicit user confirmation:
    `TICKET=<key> npm run evidence:comment -- --rows src/evidence/<key>/comment-rows.json`.
-   Run `--dry-run` first and report the ADF size line.
+   Run `--dry-run` first and report the ADF size line. To rebuild an old comment against the
+   media it first showed, add `--uploaded-before <ISO time>`.
 
 ## Findings and bugs
 
@@ -41,10 +48,12 @@ When a run exposes a real defect:
   they cannot see. Pick the frame showing the fault, say which screen it is, and quote the
   server's own words when an API failed.
 - Record it in `comment-rows.json` → `findings`, with `replicate` steps and media.
-- If a bug ticket is raised, **it gets the failure media too**: copy the `*-FAILED.*` files into
-  `src/evidence/<BUG-KEY>/`, write a minimal `comment-rows.json` there, attach, then
-  `TICKET=<BUG-KEY> npm run evidence:embed -- --from-rows …` so the proof renders inline in the
-  description. Proof that lives only on the parent ticket makes the bug unreadable on its own.
+- If a bug ticket is raised, **it gets the failure media too**: copy the case's `*-FAILED.png`,
+  `*-FAILED.webm` and `*-FAILED-trace.zip` into `src/evidence/<BUG-KEY>/`, write a minimal
+  `comment-rows.json` there, attach, then `TICKET=<BUG-KEY> npm run evidence:embed -- --from-rows …`
+  so the proof renders inline in the description. The embed also turns the trace into a redacted
+  `<BUG-KEY>-<env>.har`, attaches it and lists the failing calls under a Network capture note.
+  Proof that lives only on the parent ticket makes the bug unreadable on its own.
 - Every bug description opens with an Environment block — the exact repro URL (from `page.url()`
   at failure, not the site root) and the Chromium build used (`npx playwright --version`).
 

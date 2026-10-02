@@ -42,11 +42,23 @@
 </ul>
 
 <h2>Test Scenario</h2>
+<!--
+  One table per layer: UI Tests, then API Tests (drop the API section when the
+  ticket has no API cases, and then drop the title row too). TC ids run on from
+  the UI rows. Each table has a centred title row, the column headings, then a
+  bold full-width row per feature group — the spec's test.describe title.
+  An API case's evidence is its -response.json, linked as an attachment.
+-->
+<h3>UI Tests</h3>
 <table data-layout="full-width">
-  <tbody>
+  <thead>
+    <tr><th colspan="6"><p style="text-align: center;"><strong>UI Tests</strong></p></th></tr>
     <tr>
-      <th>TC</th><th>Case</th><th>Steps</th><th>Expected result</th><th>Staging</th><th>Production</th>
+      <th>TC</th><th>Scenario</th><th>Steps</th><th>Expected result</th><th>Staging</th><th>Production</th>
     </tr>
+  </thead>
+  <tbody>
+    <tr><td colspan="6"><p><strong>Checkout</strong></p></td></tr>
     <tr>
       <td><strong>TC-001</strong></td>
       <td>Completed order confirms back to the shopper<br/><code>src/tests/checkout/checkout.spec.ts</code></td>
@@ -79,6 +91,37 @@
       <td>Validation reads "Error: Postal Code is required" and the overview does not open.</td>
       <td><p>❌ Fail — raised as <a href="https://your-org.atlassian.net/browse/PROJ-456">PROJ-456</a></p></td>
       <td><p>Not run — write flows are read-only in production.</p></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>API Tests</h3>
+<table data-layout="full-width">
+  <thead>
+    <tr><th colspan="6"><p style="text-align: center;"><strong>API Tests</strong></p></th></tr>
+    <tr>
+      <th>TC</th><th>Scenario</th><th>Steps</th><th>Expected result</th><th>Staging</th><th>Production</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td colspan="6"><p><strong>Orders API</strong></p></td></tr>
+    <tr>
+      <td><strong>TC-003</strong></td>
+      <td>An unknown order id returns 404<br/><code>src/tests/checkout/orders.api.spec.ts</code></td>
+      <td>
+        <ol>
+          <li>Send GET /orders/{id} with an order id that does not exist, as a signed-in shopper</li>
+        </ol>
+      </td>
+      <td>The status is 404 Not Found.</td>
+      <td>
+        <p>✅ Pass</p>
+        <p><ac:link><ri:attachment ri:filename="an-unknown-order-id-returns-404-staging-response.json" /></ac:link></p>
+      </td>
+      <td>
+        <p>✅ Pass</p>
+        <p><ac:link><ri:attachment ri:filename="an-unknown-order-id-returns-404-prod-response.json" /></ac:link></p>
+      </td>
     </tr>
   </tbody>
 </table>
