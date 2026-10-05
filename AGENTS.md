@@ -68,9 +68,10 @@ environment in this conversation. Local, dev, qa and staging may run without ask
 
 ## Cursor and Claude Code (same files)
 
-`.claude/` and `.cursor/` are **mirrors** of agents, commands, skills, rules and hook scripts, so
+`.claude/` and `.cursor/` are **mirrors** of agents, commands, rules and hook scripts, so
 either IDE runs the same pipeline. After editing one side:
-`npm run sync:ai -- --from=claude` (or `--from=cursor`). Check with `npm run sync:ai:check`.
+`npm run sync:ai -- --from=claude` (or `--from=cursor`). Skills live once in `.agents/skills/`,
+symlinked into both `skills/` folders, so edit them there. Check with `npm run sync:ai:check`.
 There is no `.cursorrules` — this file and `CLAUDE.md` are the rulebooks.
 
 - **Commands:** `/e2e-ticket` runs a ticket end to end.

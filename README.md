@@ -76,8 +76,8 @@ whether a suite survives its second quarter are the ones usually left as an exer
   API-first prerequisite setup.
 - **Lint, format, secret scan** — ESLint flat config (Playwright plugin on specs) + Prettier,
   with Husky running a secret scanner and lint-staged on commit.
-- **AI tooling** — mirrored `.claude/` and `.cursor/` agents, commands, skills and rules, so
-  Cursor and Claude Code run the same pipeline. No locator auto-healing.
+- **AI tooling** — mirrored `.claude/` and `.cursor/` agents, commands and rules, plus skills
+  shared from `.agents/skills/`, so Cursor and Claude Code run the same pipeline. No locator auto-healing.
 - **Type safety** — TypeScript throughout; `npm run typecheck` must pass.
 
 ## Framework benefits
@@ -99,10 +99,11 @@ with `TICKET=<key>` — not a ticket folder.
 ```
 Regression-Test-Playwright-Framework/
 │
-├── .claude/ / .cursor/       # Mirrored agents, commands, skills, rules, hooks
+├── .agents/skills/           # Shared skills, symlinked into .claude/skills and .cursor/skills
+├── .claude/ / .cursor/       # Mirrored agents, commands, rules, hooks
 │   ├── agents/               # e2e-explorer, e2e-runner, e2e-evidence
 │   ├── commands/             # /e2e-ticket
-│   ├── skills/ / rules/      # e2e patterns, TDD, evidence conventions
+│   ├── rules/                # conventions, env approval, evidence visibility, Zephyr cases
 │   └── hooks/                # skill reminder
 ├── .husky/                   # pre-commit → scan-secrets + lint-staged
 ├── .github/workflows/        # CI: typecheck, lint, secrets, reachability, Playwright, Allure
@@ -577,8 +578,9 @@ stay green. DeepEval's anonymous telemetry is turned off (`DEEPEVAL_TELEMETRY_OP
 
 ## AI-assisted development
 
-Cursor and Claude Code share the same agents, commands, skills and rules under `.claude/` and
-`.cursor/`. After editing one side:
+Cursor and Claude Code share the same agents, commands and rules under `.claude/` and
+`.cursor/`, and the same skills from `.agents/skills/` (symlinked into both, so edit them once).
+After editing one side:
 
 ```bash
 npm run sync:ai                  # .claude → .cursor

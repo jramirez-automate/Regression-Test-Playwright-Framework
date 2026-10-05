@@ -6,10 +6,11 @@ the same rules. Edit one side, then sync:
 ```bash
 npm run sync:ai                  # .claude → .cursor
 npm run sync:ai -- --from=cursor # .cursor → .claude
-npm run sync:ai:check            # exit 2 if any pair differs
+npm run sync:ai:check            # exit 2 if any pair differs or a skill link is wrong
 ```
 
-Mirrored: `agents/`, `commands/`, `skills/`, `rules/`, `hooks/`, and this README.
+Mirrored: `agents/`, `commands/`, `rules/`, `hooks/`, and this README. `skills/` holds symlinks
+into `.agents/skills/`, the one copy of each skill.
 **Not** mirrored (platform-specific): `.claude/settings.json`, `.claude/settings.local.json`,
 `.cursor/hooks.json`, `.cursor/mcp.json`.
 
@@ -25,8 +26,8 @@ Mirrored: `agents/`, `commands/`, `skills/`, `rules/`, `hooks/`, and this README
 | `rules/env-run-approval.mdc` | Never run beta / production without explicit approval |
 | `rules/e2e-evidence-visibility.mdc` | Evidence must show its subject; show found bugs in the chat |
 | `rules/e2e-zephyr-cases.mdc` | Test-management cases read as user actions, not specs |
-| `skills/e2e-testing-patterns/` | Playwright patterns, flaky-test debugging |
-| `skills/tdd/` | The red → green loop, seams, anti-patterns |
+| `skills/e2e-testing-patterns/` | Playwright patterns, flaky-test debugging (in `.agents/skills/`) |
+| `skills/tdd/` | The red → green loop, seams, anti-patterns (in `.agents/skills/`) |
 | `hooks/e2e-skill-reminder.py` | Nudges the e2e skill onto relevant prompts |
 
 ## Why subagents
