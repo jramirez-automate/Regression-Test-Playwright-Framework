@@ -3,13 +3,14 @@
  * scan-secrets.js — lightweight secret scanner (no third-party dependency).
  *
  * Scans a set of files for common credential/secret shapes: AWS keys,
- * Anthropic/OpenAI API keys, GitHub tokens, Slack tokens, JWTs, private key
- * blocks, and basic-auth URLs. Intentionally narrow — it is a pre-commit/CI
+ * Anthropic/OpenAI API keys, GitHub tokens, Slack tokens, Atlassian API
+ * tokens, Slack/Teams webhook URLs, JWTs, private key blocks, and basic-auth
+ * URLs. Intentionally narrow — it is a pre-commit/CI
  * tripwire against accidentally committed real credentials, not a general
  * security scanner. Never modifies files.
  *
  * Usage:
- *   node scripts/scan-secrets.js               # scan all git-tracked files
+ *   node scripts/scan-secrets.js               # scan tracked + untracked-not-ignored files
  *   node scripts/scan-secrets.js --staged      # scan only staged files (pre-commit)
  *   node scripts/scan-secrets.js --self-test   # verify detection logic, then exit
  *
@@ -38,6 +39,12 @@ const PATTERNS = [
 	{ name: "OpenAI API Key", regex: /\b(sk-[A-Za-z0-9]{20,})\b/g },
 	{ name: "GitHub Token", regex: /\b((?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36,})\b/g },
 	{ name: "Slack Token", regex: /\b(xox[baprs]-[A-Za-z0-9-]{10,})\b/g },
+	{ name: "Atlassian API Token", regex: /\b(ATATT3[A-Za-z0-9_\-=]{30,})/g },
+	{
+		name: "Chat Webhook URL",
+		regex:
+			/(https:\/\/(?:hooks\.slack\.com\/services|[a-z0-9-]+\.webhook\.office\.com|[a-z0-9-]+\.logic\.azure\.com)\/[^\s'"]+)/gi,
+	},
 	{
 		name: "JWT",
 		regex: /\b(eyJ[A-Za-z0-9_-]{5,}\.eyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{10,})\b/g,
@@ -56,6 +63,8 @@ const IGNORED_PATH_SEGMENTS = [
 	"playwright-report/",
 	"evidence/",
 	"src/evidence/",
+	"allure-report/",
+	"allure-results/",
 	".auth/",
 	"package-lock.json",
 	"scripts/scan-secrets.js", // contains the patterns themselves — would self-match
@@ -79,9 +88,11 @@ function mask(value) {
 	return `${value.slice(0, 4)}…${value.slice(-4)} (${value.length} chars)`;
 }
 
+// Tracked files plus untracked ones that are not gitignored — everything that could
+// be committed next, so a new file is covered before its first `git add`.
 function gitTrackedFiles() {
 	try {
-		return execSync("git ls-files", { cwd: ROOT, encoding: "utf-8" })
+		return execSync("git ls-files --cached --others --exclude-standard", { cwd: ROOT, encoding: "utf-8" })
 			.split(/\r?\n/)
 			.filter(Boolean);
 	} catch {
@@ -157,6 +168,14 @@ function selfTest() {
 		{ name: "GitHub Token", text: "token: " + "ghp_" + "abcdefghijklmnopqrstuvwxyz0123456789" },
 		{ name: "Slack Token", text: "SLACK_WEBHOOK=" + "xoxb-1234567890-" + "abcdefghijklmnop" },
 		{
+			name: "Atlassian API Token",
+			text: "JIRA_API_TOKEN=" + "ATATT3xFfGF0" + "abcdefghijklmnopqrstuvwxyz0123456789",
+		},
+		{
+			name: "Chat Webhook URL",
+			text: "CHAT_WEBHOOK_URL=" + "https://hooks.slack.com/services/" + "T000/B000/abcdefghijklmnop",
+		},
+		{
 			name: "JWT",
 			text:
 				"eyJhbGciOiJIUzI1NiJ9." +
@@ -170,6 +189,8 @@ function selfTest() {
 		"ANTHROPIC_API_KEY=your-anthropic-api-key-here",
 		"TEST_PASSWORD=<REPLACE_ME>",
 		"BASE_URL=https://example.com",
+		"JIRA_API_TOKEN=",
+		"CHAT_WEBHOOK_URL=",
 	];
 
 	let ok = true;

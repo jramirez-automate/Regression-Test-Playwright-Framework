@@ -49,6 +49,7 @@
     "check:reachability": "node scripts/check-reachability.js",
     "sync:ai": "node scripts/sync-ai-mirrors.mjs --from=claude",
     "sync:ai:check": "node scripts/sync-ai-mirrors.mjs --check",
+    "sync:child": "node scripts/sync-child.mjs",
     "prepare": "husky"
   },
   "lint-staged": {

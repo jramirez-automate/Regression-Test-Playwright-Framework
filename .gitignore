@@ -40,5 +40,8 @@ src/evidence/
 # Agent local settings (machine-specific permissions)
 .claude/settings.local.json
 
+# Child checkouts the post-commit / post-merge hooks sync into (machine-specific)
+.sync-children
+
 # Windows "downloaded from the internet" metadata beside test fixtures
 *:Zone.Identifier

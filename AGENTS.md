@@ -76,7 +76,9 @@ There is no `.cursorrules` — this file and `CLAUDE.md` are the rulebooks.
 
 - **Commands:** `/e2e-ticket` runs a ticket end to end.
 - **Subagents:** e2e-explorer, e2e-runner, e2e-evidence.
-- **Skills:** e2e-testing-patterns, tdd.
+- **Skills:** e2e-testing-patterns, tdd, api-testing, bug-reporting, exploratory-testing,
+ test-case-design; vendored third-party skills are pinned in `skills-lock.json` and lose to
+ this file where they disagree.
 - **MCP:** `.cursor/mcp.json` / `.mcp.json` (Playwright for browser exploration — not a runner).
 
 If subagents and commands are unavailable, run the same pipeline as staged steps that hand off

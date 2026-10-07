@@ -30,6 +30,7 @@ Fresh-machine setup: [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
 - [Publishing pipeline](#publishing-pipeline)
 - [QA artifact evals](#qa-artifact-evals)
 - [AI-assisted development](#ai-assisted-development)
+- [Syncing a child repo](#syncing-a-child-repo)
 - [Best practices](#best-practices)
 - [Troubleshooting](#troubleshooting)
 - [Documentation index](#documentation-index)
@@ -591,6 +592,13 @@ npm run sync:ai:check            # exit 2 if any pair differs
 There is no `.cursorrules`; guidance lives in `AGENTS.md` and `CLAUDE.md`. The Playwright MCP is
 for **browser exploration**, not as a test runner.
 
+Skills: the suite's own `e2e-testing-patterns`, `tdd`, `api-testing`, `bug-reporting`,
+`exploratory-testing` and `test-case-design`, plus the vendored third-party
+`playwright-best-practices`, `playwright-cli`, `playwright-generate-test`, `writing-for-agents`,
+`cursor-memory-curator`, `skill-eval-methodology` and `code-review`. `skills-lock.json` pins
+each vendored skill's source and hash; where one disagrees with `AGENTS.md`, `AGENTS.md` wins.
+`code-review` finds a ticket's spec through `docs/agents/issue-tracker.md`.
+
 ### Where selectors come from — a strict ladder
 
 The explorer works down three tiers and uses the first one available, because each is weaker
@@ -637,6 +645,51 @@ npm run test:codegen -- /orders/new # …starting on a deep link
 Subagents: **e2e-explorer** (read-only app exploration → a compact selector/flow map),
 **e2e-runner** (run, triage, fix, loop until green), **e2e-evidence** (capture, verify against
 criteria, publish).
+
+## Syncing a child repo
+
+`IWS-Automation-tests` and `Ideagen-Learning-Automation-tests` started as copies of this
+framework. They share no git history with it, so framework changes reach them by copy, not merge:
+
+```bash
+npm run sync:child -- ../IWS-Automation-tests          # dry run: what would change
+npm run sync:child -- ../IWS-Automation-tests --diff   # the same, with diffs
+npm run sync:child -- ../IWS-Automation-tests --apply  # write it (child must be on a branch, not main)
+```
+
+Only framework-owned paths are copied (`scripts/`, `.claude/`, `.cursor/`, `.agents/skills/`,
+`templates/`, `evals/`, `src/fixtures.ts`, `src/utils/`, `src/types/`, the two reporters and the
+lint, format, husky and TypeScript config), always from this repo's committed `HEAD`. Specs,
+page objects, docs, `package.json`, `vendor.config.json` and `.env.*` are never touched;
+`package.json` differences are listed for you to merge by hand.
+
+The child records what it last received in `.framework-sync.json`. A file the child edited since
+then is a **conflict** and is left alone. Keep the child's version for good by adding the path to
+`local` (a trailing `/` covers a folder), or take the framework's with `--take=<path>` for one
+file or `--overwrite` for every conflict. A **blocked** path is a real folder in the child where
+the framework has a link (an old skill copy, say); move it by hand. Commit `.framework-sync.json`
+in the child with the synced files.
+
+Until a child's first sync, it has no record, so every differing file is a conflict. Do that
+first sync by hand: dry-run with `--diff`, list the child's own files under `local`, then
+`--apply` with `--take` for the rest.
+
+Once a child has its first sync committed, list its checkout in the gitignored `.sync-children`,
+one path per line. After a commit or pull lands on `main`, the `post-commit` / `post-merge` hooks
+apply new framework changes into each child that is on a branch, ready for you to commit there.
+A child on `main` is skipped with a notice. The hook never fails the git command. The hooks need
+Husky installed: `npm run prepare` once, then `git config --get core.hooksPath` prints
+`.husky/_`.
+
+In CI, `.github/workflows/sync-child.yml` runs on every push to `main` that touches a synced
+path. For each child it clones the Bitbucket origin (`damstratechnology/<repo>`), applies the
+sync, and keeps one pull request open from the bot-owned `framework-sync` branch, rebuilt from
+the child's `main` each run. One Atlassian account API token (scoped to Bitbucket, with
+repository and pull request read and write) covers every child the account can reach: store it
+as `BITBUCKET_SYNC_TOKEN` and the account's email as `BITBUCKET_SYNC_USER`. The pull requests
+are opened as that account. Without both secrets the workflow skips with a warning, and it
+refuses any child without a committed `.framework-sync.json`. Run it by hand from the Actions
+tab; manual runs default to a dry run.
 
 ## Best practices
 
@@ -737,6 +790,7 @@ npm run test:ui
 | `npm run scan:secrets` / `:staged` | Secret scanner |
 | `npm run check:reachability` | TCP preflight |
 | `npm run sync:ai` / `sync:ai:check` | Mirror `.claude` ↔ `.cursor` |
+| `npm run sync:child -- <path>` | Dry-run (or `--apply`) framework file updates into a child repo |
 
 ## License
 
