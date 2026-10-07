@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "skills": {
+    "playwright-best-practices": {
+      "source": "currents-dev/playwright-best-practices-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "63ce3ddf87fb796c7855f4d6b34f892b3f83b288cf11c1ea1e4503a0c1b6cc6b"
+    },
+    "playwright-cli": {
+      "source": "microsoft/playwright-cli",
+      "sourceType": "github",
+      "skillPath": "skills/playwright-cli/SKILL.md",
+      "computedHash": "f602822b51bcb6d033749c60731b8f1e80f308222fcb2e4af551905a817c6e08"
+    },
+    "playwright-generate-test": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/playwright-generate-test/SKILL.md",
+      "computedHash": "8f963da3e25f705ff39755b8b990f20da0c0320cb86ac83fcc4d2d4eca91f6e4"
+    },
+    "writing-for-agents": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/writing-for-agents/SKILL.md",
+      "computedHash": "95da47fc97af998e85b7d7e6d57b3ac76727c1e290cfe9ea09005aacb826959f"
+    },
+    "cursor-memory-curator": {
+      "source": "stark-ai-de/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cursor-operations/cursor-memory-curator/SKILL.md",
+      "computedHash": "6c7e8ee71c5cc3bc95be5b64ce352992e7c8e0d94f5692a378567573bca128f2"
+    },
+    "skill-eval-methodology": {
+      "source": "bengous/agents-skills",
+      "sourceType": "github",
+      "skillPath": "skill-eval-methodology/SKILL.md",
+      "computedHash": "4fb2eb517e31df699065391b222d9dc8ec5facfc691c449917b3a116ec4040aa"
+    },
+    "code-review": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/code-review/SKILL.md",
+      "computedHash": "caa9a086baaf9e0f7cd71f64edfa83da6821c05e826b083221f3d02e3d6a1905"
+    }
+  }
+}
